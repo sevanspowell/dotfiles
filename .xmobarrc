@@ -1,0 +1,28 @@
+Config { font = "-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*"
+       , borderColor = "black"
+       , bgColor = "#161616"
+       , fgColor = "grey"
+       , position = BottomW L 100
+       , commands = [ Run Cpu ["-L","3","-H","50","--normal","green","--high","red"] 10
+                    , Run Memory [ "--template", "Mem: <usedratio>%"
+                                 , "--Low"     , "20"          -- units: %
+                                 , "--High"    , "80"          -- units: %
+                                 , "--low"     , "green" 
+                                 , "--normal"  , "orange" 
+                                 , "--high"    , "red" 
+                                 ] 10
+                    , Run Swap [] 10
+                    , Run Date "%a %b %_d %l:%M" "date" 10
+                    , Run DynNetwork [ "--template" , "<dev>: <tx>kB/s"
+                                     , "--Low"      , "50000"   -- units: B/s
+                                     , "--High"     , "500000"   -- units: B/s
+                                     , "--low"      , "green"
+                                     , "--normal"   , "orange"
+                                     , "--high"     , "red"
+                                     ] 10
+                    , Run StdinReader
+                    ]
+       , sepChar = "%"
+       , alignSep = "}{"
+       , template = "%StdinReader% }{ %cpu% | %memory% | %swap% | %dynnetwork% | <fc=#ee9a00>%date%</fc>"
+       }
