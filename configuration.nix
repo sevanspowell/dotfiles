@@ -32,7 +32,10 @@
       version = 2;
     };
   };
-
+  boot.extraModprobeConfig = ''
+    options snd slots=snd-hda-intel
+  '';
+  boot.blacklistedKernelModules = [ "snd_pcsp" ];
 
   networking.networkmanager.enable = true;
   networking.hostName = "orchid"; # Define your hostname.
@@ -48,26 +51,42 @@
   # Set your time zone.
   time.timeZone = "Australia/Sydney";
 
+  nixpkgs.config.allowUnfree = true;
+
   # List packages installed in system profile. To search by name, run:
-  # $ nix-env -qaP | grep wget
+  # $ nix-env -qap | grep wget
   environment.systemPackages = (with pkgs; [
+    autoconf
     arandr
+    bind
     emacs
+    cabal2nix
+    cabal-install
     chromium
     dmenu
+    dropbox
+    hlint
     firefox
     ghc
     git
+    gcc-arm-embedded
     parted
     htop
+    llvm_6
+    lsof
+    mgba
     networkmanagerapplet
     nix-prefetch-scripts
     nix-repl
+    pandoc
+    postgresql
     rxvt_unicode-with-plugins
     scrot
     silver-searcher
     sqlite
     stalonetray
+    # texlive.combined.scheme-full
+    unzip
     vagrant
     vim
     wget
@@ -85,6 +104,7 @@
   fonts.fonts = with pkgs; [
     meslo-lg
     fira-code
+    source-code-pro
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -98,6 +118,20 @@
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
 
+  # Enable PostgreSQL
+  services.postgresql = {
+    enable = true;
+    package = pkgs.postgresql100;
+    enableTCPIP = true;
+    authentication = pkgs.lib.mkOverride 10 ''
+      local all all trust
+      host all all ::1/128 trust
+    '';
+    initialScript = pkgs.writeText "backend-initScript" ''
+      CREATE ROLE sam WITH LOGIN PASSWORD 'sam' CREATEDB;
+    '';
+  };
+
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
@@ -108,8 +142,9 @@
   # services.printing.enable = true;
 
   # Enable sound.
-  # sound.enable = true;
-  # hardware.pulseaudio.enable = true;
+  sound.enable = true;
+  hardware.pulseaudio.enable = true;
+  hardware.pulseaudio.support32Bit = true;
 
   # Enable the X11 windowing system.
   services.xserver = {
