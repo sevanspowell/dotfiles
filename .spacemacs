@@ -511,6 +511,9 @@ before packages are loaded."
   ;; Haskell
   (require 'lsp-haskell)
   (add-hook 'haskell-mode-hook #'lsp-haskell-enable)
+
+  (setq browse-url-browser-function 'browse-url-generic
+        browse-url-generic-program "chromium-browser")
   )
 
 ;; Do not write anything past this comment. This is where Emacs will
