@@ -1,22 +1,22 @@
-Config { font = "-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*"
+Config { font = "xft:Meslo LG S:bold:size=10:antialias=true"
        , borderColor = "black"
-       , bgColor = "#161616"
-       , fgColor = "grey"
+       , bgColor = "#252426"
+       , fgColor = "#b2b2b2"
        , position = BottomW L 100
-       , commands = [ Run Cpu ["-L","3","-H","50","--normal","green","--high","red"] 10
+       , commands = [ Run Cpu ["-L","3","-H","50","--normal","#2d9574","--high","red"] 10
                     , Run Memory [ "--template", "Mem: <usedratio>%"
                                  , "--Low"     , "20"          -- units: %
                                  , "--High"    , "80"          -- units: %
-                                 , "--low"     , "green" 
+                                 , "--low"     , "#2d9574" 
                                  , "--normal"  , "orange" 
                                  , "--high"    , "red" 
                                  ] 10
                     , Run Swap [] 10
-                    , Run Date "%a %b %_d %l:%M" "date" 10
+                    , Run Date "%a %b %_d %T" "date" 10
                     , Run DynNetwork [ "--template" , "<dev>: <tx>kB/s"
                                      , "--Low"      , "50000"   -- units: B/s
                                      , "--High"     , "500000"   -- units: B/s
-                                     , "--low"      , "green"
+                                     , "--low"      , "#2d9574"
                                      , "--normal"   , "orange"
                                      , "--high"     , "red"
                                      ] 10
@@ -24,5 +24,5 @@ Config { font = "-*-Fixed-Bold-R-Normal-*-13-*-*-*-*-*-*-*"
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = "%StdinReader% }{ %cpu% | %memory% | %swap% | %dynnetwork% | <fc=#ee9a00>%date%</fc>"
+       , template = "%StdinReader% }{ %cpu% | %memory% | %swap% | %dynnetwork% | <fc=#bc6ec5>%date%</fc> "
        }

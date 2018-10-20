@@ -26,3 +26,5 @@ fi
 emacs --daemon
 
 exec xmonad
+
+xset m 1 4

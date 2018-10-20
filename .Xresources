@@ -1,11 +1,11 @@
 URxvt.scrollBar: false
-URxvt.font: xft:Monospace:size=10:antialias=true
-URxvt.boldFont: xft: Monospace:bold:size=10:antialias=true
+URxvt.font: xft:Meslo LG S:size=10:antialias=true
+URxvt.boldFont: xft:Meslo LG S:bold:size=10:antialias=true
 
 ! Google Material Design
 
-*background 		: #263238
-*foreground 		: #eceff1
+*background 		: #292b2e
+*foreground 		: #b2b2b2
 
 ! black
 *color0  			: #263238
@@ -14,7 +14,7 @@ URxvt.boldFont: xft: Monospace:bold:size=10:antialias=true
 *color1  			: #ff9800
 *color9  			: #ffa74d
 ! green
-*color2  			: #8bc34a
+*color2  			: #2d9574
 *color10 			: #9ccc65
 ! yellow
 *color3  			: #ffc107
@@ -24,10 +24,16 @@ URxvt.boldFont: xft: Monospace:bold:size=10:antialias=true
 *color12 			: #81d4fa
 ! magenta
 *color5  			: #e91e63
-*color13 			: #ad1457
+*color13 			: #ce537a
 ! cyan
 *color6  			: #009688
 *color14 			: #26a69a
 ! white
 *color7  			: #cfd8dc
 *color15 			: #eceff1
+
+! rxvt-unicode specific settings
+URxvt*scrollBar:          False
+URxvt*depth:              32
+URxvt*background:         #292b2e
+URxvt*intensityStyles:    True
