@@ -48,9 +48,7 @@ This function should only modify configuration layer settings."
             shell-default-height 30
             shell-default-position 'bottom)
      lsp
-     (haskell :variables
-              haskell-completion-backend "nix-shell --run 'cabal repl'"
-              haskell-process-type "nix-shell --run 'cabal repl'")
+     (haskell :variables haskell-process-type 'cabal-repl)
      git
      json
      nixos
@@ -66,7 +64,9 @@ This function should only modify configuration layer settings."
    ;; Also include the dependencies as they will not be resolved automatically.
    dotspacemacs-additional-packages '(
                                       direnv
-                                      (lsp-haskell :location (recipe :fetcher github :repo "emacs-lsp/lsp-haskell"))
+                                      nix-sandbox
+                                      ;; (lsp-haskell :location (recipe :fetcher github :repo "emacs-lsp/lsp-haskell"))
+                                      (lsp-haskell :location (recipe :fetcher file :path "~/code/ephox/tools/lsp-haskell"))
                                       )
 
    ;; A list of packages that cannot be updated.
@@ -510,7 +510,41 @@ before packages are loaded."
 
   ;; Haskell
   (require 'lsp-haskell)
+
+  (setq default-nix-wrapper
+        (lambda (args)
+          (append
+           (append (list "nix-shell" "-I" "tinypkgs-local=/home/sam/code/ephox/tools/tinypkgs" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
+                   (list (mapconcat 'identity args " "))
+                   )
+           (list (nix-current-sandbox))
+           )
+          )
+        )
+
+  (setq flycheck-command-wrapper-function default-nix-wrapper
+        flycheck-executable-find
+        (lambda (cmd) (nix-executable-find (nix-current-sandbox) cmd)))
+  (setq haskell-process-wrapper-function default-nix-wrapper)
+  (setq lsp-haskell-process-wrapper-function default-nix-wrapper)
+
+  (add-hook 'haskell-mode-hook 'flycheck-mode)
   (add-hook 'haskell-mode-hook #'lsp-haskell-enable)
+  (custom-set-variables '(haskell-tags-on-save t))
+
+  (evil-leader/set-key-for-mode 'haskell-mode "gm" 'lsp-ui-imenu)
+  (evil-leader/set-key-for-mode 'haskell-mode "gg" 'lsp-ui-peek-find-definitions)
+  (evil-leader/set-key-for-mode 'haskell-mode "gr" 'lsp-ui-peek-find-references)
+  (evil-leader/set-key-for-mode 'haskell-mode "en" 'flycheck-next-error)
+  (evil-leader/set-key-for-mode 'haskell-mode "ep" 'flycheck-previous-error)
+  (evil-leader/set-key-for-mode 'haskell-mode "el" 'flycheck-list-errors)
+  (evil-leader/set-key-for-mode 'haskell-mode "ee" 'flycheck-explain-error-at-point)
+  (evil-leader/set-key-for-mode 'haskell-mode "rR" 'lsp-rename)
+  (evil-leader/set-key-for-mode 'haskell-mode "rf" 'lsp-format-buffer)
+  (evil-leader/set-key-for-mode 'haskell-mode "ra" 'lsp-ui-sideline-apply-code-actions)
+  (evil-leader/set-key-for-mode 'haskell-mode "lr" 'lsp-restart-workspace)
+  (evil-leader/set-key-for-mode 'haskell-mode "," 'completion-at-point)
+  (evil-leader/set-key-for-mode 'haskell-mode "." 'lsp-describe-thing-at-point)
 
   (setq browse-url-browser-function 'browse-url-generic
         browse-url-generic-program "chromium-browser")
@@ -528,15 +562,10 @@ This function is called at the very end of Spacemacs initialization."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ansi-color-names-vector
-   ["#0a0814" "#f2241f" "#67b11d" "#b1951d" "#4f97d7" "#a31db1" "#28def0" "#b2b2b2"])
- '(custom-safe-themes
-   (quote
-    ("bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default)))
  '(evil-want-Y-yank-to-eol nil)
  '(package-selected-packages
    (quote
-    (web-beautify symon string-inflection spaceline-all-the-icons prettier-js password-generator overseer org-brain nameless magit-svn lsp-ui dash-functional json-navigator hierarchy json-mode json-snatcher json-reformat helm-xref helm-purpose window-purpose imenu-list helm-org-rifle helm-git-grep gitignore-templates evil-org evil-lion evil-goggles evil-cleverparens paredit editorconfig doom-modeline eldoc-eval shrink-path all-the-icons memoize dante lcr counsel-projectile counsel swiper ivy centered-cursor-mode font-lock+ dotenv-mode xterm-color ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline smeargle shell-pop restclient-helm restart-emacs rainbow-delimiters popwin persp-mode pcre2el paradox spinner orgit org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-plus-contrib org-mime org-download open-junk-file ob-restclient restclient ob-http nix-mode neotree multi-term move-text mmm-mode markdown-toc markdown-mode magit-gitflow macrostep lsp-haskell lsp-mode lorem-ipsum linum-relative link-hint intero flycheck indent-guide hydra hungry-delete htmlize hlint-refactor hl-todo hindent highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile helm-nixos-options nixos-options helm-mode-manager helm-make projectile pkg-info epl helm-hoogle helm-gitignore request helm-flx helm-descbinds helm-ag haskell-snippets yasnippet google-translate golden-ratio gnuplot gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit magit magit-popup git-commit ghub treepy let-alist graphql evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight eshell-z eshell-prompt-extras esh-help elisp-slime-nav dumb-jump f s direnv with-editor dash diminish define-word company-ghci company-ghc ghc company haskell-mode column-enforce-mode cmm-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async))))
+    (nix-sandbox xterm-color ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline smeargle shell-pop restclient-helm restart-emacs rainbow-delimiters popwin persp-mode pcre2el paradox spinner orgit org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-plus-contrib org-mime org-download open-junk-file ob-restclient restclient ob-http nix-mode neotree multi-term move-text mmm-mode markdown-toc markdown-mode magit-gitflow macrostep lsp-haskell lsp-mode lorem-ipsum linum-relative link-hint intero flycheck indent-guide hydra hungry-delete htmlize hlint-refactor hl-todo hindent highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile helm-nixos-options nixos-options helm-mode-manager helm-make projectile pkg-info epl helm-hoogle helm-gitignore request helm-flx helm-descbinds helm-ag haskell-snippets yasnippet google-translate golden-ratio gnuplot gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit magit magit-popup git-commit ghub treepy let-alist graphql evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight eshell-z eshell-prompt-extras esh-help elisp-slime-nav dumb-jump f s direnv with-editor dash diminish define-word company-ghci company-ghc ghc company haskell-mode column-enforce-mode cmm-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
