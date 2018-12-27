@@ -8,7 +8,7 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      # ./keybase.nix
+      ./keybase.nix
     ];
 
   boot.loader.systemd-boot.enable = true;
@@ -45,7 +45,6 @@
     dmenu
     dropbox
     docker
-    gimp
     sbt
     scala
     jetbrains.idea-community
@@ -139,11 +138,6 @@
     layout = "us";
     desktopManager.default = "none";
     desktopManager.xterm.enable = false;
-    # displayManager.lightdm = {
-    #   enable = true;
-    #   autoLogin.enable = true;
-    #   autoLogin.user = "sam";
-    # };
     displayManager.slim.defaultUser = "sam";
     xkbOptions = "ctrl:nocaps";
     videoDrivers = ["nvidia"];
