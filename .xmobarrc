@@ -1,4 +1,4 @@
-Config { font = "xft:Meslo LG S:bold:size=10:antialias=true"
+Config { font = "xft:Source Code Pro:bold:size=9:antialias=true"
        , borderColor = "black"
        , bgColor = "#252426"
        , fgColor = "#b2b2b2"
