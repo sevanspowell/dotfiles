@@ -28,6 +28,9 @@ addedKeys conf @ (XConfig { XMonad.modMask = modMask }) = [
               -- Launch Internet Browser
             , ((modMask .|. shiftMask, xK_i), spawn "chromium")
 
+              -- Launch Inbox
+            , ((modMask, xK_i), spawn "emacsclient -c -a emacs ~/org/inbox.org")
+
               -- Restart xmonad
             , ((modMask, xK_r), restart "xmonad" True)
 
