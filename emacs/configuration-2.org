@@ -1,0 +1,152 @@
+* Emacs Configuration
+
+** Package management
+#+BEGIN_SRC emacs-lisp
+(require 'package)
+
+;; Don't load any packages on startup
+(setq package-enable-at-startup nil)
+
+(setq package-archives '(("org"   . "http://orgmode.org/elpa/")
+                         ("gnu"   . "http://elpa.gnu.org/packages/")
+                         ("melpa" . "https://melpa.org/packages/")))
+
+(package-initialize)
+
+;; If 'use-package' isn't installed...
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(require 'use-package)
+#+END_SRC
+
+** Packages
+#+BEGIN_SRC emacs-lisp
+  (setq ivy-initial-inputs-alist nil)
+  (use-package avy     :ensure t
+    :commands (avy-goto-word-1) ;; Commands that trigger loading of avy
+    :commands (avy-goto-line) ;; Commands that trigger loading of avy
+    )
+  (use-package general :ensure t)
+  (use-package swiper :ensure t)
+  (use-package counsel :ensure t)
+  (use-package which-key :ensure t
+    :config
+    (which-key-mode 1)
+    )
+  (use-package evil :ensure t
+    :config
+    (evil-mode 1)
+    )
+  (use-package evil-surround
+    :ensure t
+    :config
+    (global-evil-surround-mode 1)
+    )
+  (general-define-key
+    :states '(visual)
+    "s" 'evil-surround-region
+    "S" 'evil-substitute
+    )
+  (general-define-key
+    :keymaps 'ivy-minibuffer-map
+    "C-j" 'ivy-next-line
+    "C-k" 'ivy-previous-line
+    "C-l" 'ivy-alt-done
+    "C-h" 'counsel-up-directory
+    )
+  (general-define-key
+    "C-s" 'swiper
+    )
+  (general-define-key
+    :states '(normal visual insert emacs)
+    :prefix "SPC"
+    :non-normal-prefix "C-SPC"
+
+    "SPC" 'counsel-M-x
+    "qq"   'kill-emacs
+    "f"   '(:ignore t :which-key "files")
+    "fs"  'save-buffer
+    "fed"  '(lambda () (interactive) (find-file "~/.emacs.d/configuration.org"))
+    "fer"  '(lambda () (interactive) (load-file "~/.emacs.d/init.el"))
+    "ff"  'counsel-find-file
+    "b"  'ivy-switch-buffer
+
+    "h"   '(:ignore t :which-key "help")
+    "hd"  '(:ignore t :which-key "describe")
+    "hdv" '(counsel-describe-variable :which-key "describe-variable")
+    "hdf" '(counsel-describe-function :which-key "describe-function")
+    "hdk" 'describe-key
+
+    "t" '(:ignore t :which-key "utility")
+    "tw" '(:ignore t :which-key "whitespace")
+    "twm" 'whitespace-mode
+    "twx" 'delete-trailing-whitespace
+
+    "tt" '(:ignore t :which-key "theme")
+    "ttl" 'counsel-load-theme
+
+    "w" '(:ignore t :which-key "window")
+    "wd" 'evil-window-delete
+  )
+#+END_SRC
+
+** General
+
+Disable menu, scroll bar:
+#+BEGIN_SRC emacs-lisp
+  (tool-bar-mode 0)
+  (menu-bar-mode 0)
+  (when window-system
+    (scroll-bar-mode -1))
+#+END_SRC
+
+*** Backups
+#+BEGIN_SRC emacs-lisp
+  ; Use version control
+  (setq version-control t)
+  ; Make backups even when in ver-controlled dir
+  (setq vc-make-backup-files t)
+  ; Which directory to put backup files in
+  (setq backup-directory-alist `(("." . "~/.emacs.d/backups")) )
+  ; Delete excess backup versions silently.
+  (setq delete-old-versions -1)
+#+END_SRC
+
+*** Other
+#+BEGIN_SRC emacs-lisp
+ ; Don't ask for confirmation to followsymlinks
+ (setq vc-follow-symlinks t )
+ ; Transform backups file name
+ (setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t)) )
+ ; Inhibit useless and old-school startup screen
+ (setq inhibit-startup-screen t )
+ ; Silent bell when you make a mistake
+ (setq ring-bell-function 'ignore )
+ ; Use utf-8 by default
+ (setq coding-system-for-read 'utf-8 )
+ (setq coding-system-for-write 'utf-8 )
+ ; Sentence SHOULD end with only a point.
+ (setq sentence-end-double-space nil)
+ ; Toggle wrapping text at the 80th character
+ (setq default-fill-column 80)
+#+END_SRC
+
+** Theme
+#+BEGIN_SRC emacs-lisp
+  (use-package doom-themes :ensure t)
+  (load-theme 'doom-city-lights t)
+#+END_SRC
+
+** Org mode
+
+Activate org-mode src code highlighting:
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-src-fontify-natively t)
+#+END_SRC
+
+** Contact
+
+mail@sevanspowell.net
