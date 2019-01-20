@@ -24,19 +24,19 @@ main = do
   xmproc <- spawnPipe "xmobar"
   xmonad =<< xmobar myConfig
 
-backgroundColor = "#FFFFFF"
-middleColor     = "#AEAEAE"
-foregroundColor = "#000000"
+backgroundColor = "#000000"
+middleColor     = "#343434"
+foregroundColor = "#555555"
 
 myConfig = def
     { borderWidth = 1
     , manageHook = insertPosition Below Newer <+> manageDocks <+> manageHook def
-    , layoutHook = avoidStruts $ spacingWithEdge 2 emptyBSP ||| spacingWithEdge 2 (ThreeCol 1 (3/100) (-1/3))
+    , layoutHook = avoidStruts $ spacingWithEdge 2 emptyBSP ||| spacingWithEdge 2 (ThreeCol 1 (3/100) (-1/3)) ||| spacingWithEdge 2 Full
     , handleEventHook = mconcat [ docksEventHook , handleEventHook def ]
     , logHook = dynamicLogWithPP xmobarPP { ppTitle = xmobarColor "green" "" . shorten 50 }
     , modMask = mod4Mask
     , terminal = "urxvt"
     , focusedBorderColor = foregroundColor
     , normalBorderColor = middleColor
-    , keys = myKeys 
+    , keys = myKeys
     }
