@@ -44,6 +44,12 @@
     :config
     (global-evil-surround-mode 1)
     )
+  (use-package magit
+    :ensure t
+    )
+  (use-package evil-magit
+    :ensure t
+  )
   (general-define-key
     :states '(visual)
     "s" 'evil-surround-region
@@ -89,6 +95,15 @@
 
     "w" '(:ignore t :which-key "window")
     "wd" 'evil-window-delete
+    "w-" 'evil-window-split
+    "w/" 'evil-window-vsplit
+    "wj" 'evil-window-down
+    "wk" 'evil-window-up
+    "wh" 'evil-window-left
+    "wl" 'evil-window-right
+
+    "g" '(:ignore t :which-key "git")
+    "gs" 'magit
   )
 #+END_SRC
 
