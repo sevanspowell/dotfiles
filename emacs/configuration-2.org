@@ -27,6 +27,9 @@
   (use-package avy     :ensure t
     :commands (avy-goto-word-1) ;; Commands that trigger loading of avy
     :commands (avy-goto-line) ;; Commands that trigger loading of avy
+    :config
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-count-format "(%d/%d) ")
     )
   (use-package general :ensure t)
   (use-package swiper :ensure t)
@@ -50,6 +53,12 @@
   (use-package evil-magit
     :ensure t
   )
+  (use-package sudo-edit
+    :ensure t
+  )
+  (use-package all-the-icons
+    :ensure t
+  )
   (general-define-key
     :states '(visual)
     "s" 'evil-surround-region
@@ -63,21 +72,25 @@
     "C-h" 'counsel-up-directory
     )
   (general-define-key
-    "C-s" 'swiper
-    )
-  (general-define-key
     :states '(normal visual insert emacs)
     :prefix "SPC"
     :non-normal-prefix "C-SPC"
 
+    "j"  '(:ignore t :which-key "jump")
+    "js" 'swiper
+    "jl" 'avy-goto-line
+    "jk" 'avy-goto-char
+    "jb"   'ivy-switch-buffer
+
     "SPC" 'counsel-M-x
     "qq"   'kill-emacs
+
     "f"   '(:ignore t :which-key "files")
     "fs"  'save-buffer
-    "fed"  '(lambda () (interactive) (find-file "~/.emacs.d/configuration.org"))
-    "fer"  '(lambda () (interactive) (load-file "~/.emacs.d/init.el"))
+    "fed" '(lambda () (interactive) (find-file "~/.emacs.d/configuration.org"))
+    "fer" '(lambda () (interactive) (load-file "~/.emacs.d/init.el"))
     "ff"  'counsel-find-file
-    "b"  'ivy-switch-buffer
+    "fE"  'sudo-edit
 
     "h"   '(:ignore t :which-key "help")
     "hd"  '(:ignore t :which-key "describe")
@@ -89,9 +102,15 @@
     "tw" '(:ignore t :which-key "whitespace")
     "twm" 'whitespace-mode
     "twx" 'delete-trailing-whitespace
+    "tf" '(:ignore t :which-key "fill")
+    "tfm" 'auto-fill-mode
+    "tfr" 'fill-region
 
     "tt" '(:ignore t :which-key "theme")
     "ttl" 'counsel-load-theme
+
+    "i"  '(:ignore t :which-key "insert")
+    "iu" 'counsel-unicode-char
 
     "w" '(:ignore t :which-key "window")
     "wd" 'evil-window-delete
@@ -160,6 +179,50 @@ Activate org-mode src code highlighting:
 
 #+BEGIN_SRC emacs-lisp
   (setq org-src-fontify-natively t)
+#+END_SRC
+
+Capture templates for: TODO tasks, Notes, appointments, phone calls,
+meetings, and org-protocol.
+#+BEGIN_SRC emacs-lisp
+  (setq org-capture-templates
+    (quote (("t" "Todo" entry (file org-inbox-file)
+    "* TODO %?\n%U\n%a\n" :clock-in t :clock-resume t)
+    ("n" "Note" entry (file org-inbox-file)
+    "* %? :NOTE:\n%U\n%a\n" :clock-in t :clock-resume t)
+    ("m" "Meeting" entry (file org-inbox-file)
+    "* MEETING with %? :MEETING:\n%U" :clock-in t :clock-resume t)
+    ("p" "Phone call" entry (file org-inbox-file)
+    "* PHONE %? :PHONE:\n%U" :clock-in t :clock-resume t)
+    ("h" "Habit" entry (file org-inbox-file)
+    "* TODO %?\n%U\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n")
+    ))
+    )
+  (setq org-global-properties (quote (("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
+    ("STYLE_ALL" . "habit")))
+    )
+
+  (setq org-enforce-todo-dependencies t)
+
+  (setq org-todo-keywords
+    (quote ((sequence "NEXT(n)" "TODO(t)" "|" "DONE(d)")
+    (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)" "PHONE" "MEETING"))))
+#+END_SRC
+
+Clocking
+#+BEGIN_SRC emacs-lisp
+  (setq org-columns-default-format "%40ITEM(Task) %17Effort(Effort){:} %10CLOCKSUM")
+  (setq org-tags-column -77)
+  (setq org-clock-out-remove-zero-time-clocks t)
+
+  (general-define-key
+    :prefix  ","
+    :states  'normal
+    :keymaps 'org-mode-map
+    "C" '(:ignore t :which-key "clock")
+    "Ci" 'org-clock-in
+    "Co" 'org-clock-out
+    ";"  'org-columns
+    )
 #+END_SRC
 
 ** Contact
