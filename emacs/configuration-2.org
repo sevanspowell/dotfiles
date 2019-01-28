@@ -25,8 +25,6 @@
 #+BEGIN_SRC emacs-lisp
   (setq ivy-initial-inputs-alist nil)
   (use-package avy     :ensure t
-    :commands (avy-goto-word-1) ;; Commands that trigger loading of avy
-    :commands (avy-goto-line) ;; Commands that trigger loading of avy
     :config
       (setq ivy-use-virtual-buffers t)
       (setq ivy-count-format "(%d/%d) ")
