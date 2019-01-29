@@ -78,7 +78,7 @@
     "js" 'swiper
     "jl" 'avy-goto-line
     "jk" 'avy-goto-char
-    "jb"   'ivy-switch-buffer
+    "jb" 'ivy-switch-buffer
 
     "SPC" 'counsel-M-x
     "qq"   'kill-emacs
@@ -130,8 +130,8 @@ Disable menu, scroll bar:
 #+BEGIN_SRC emacs-lisp
   (tool-bar-mode 0)
   (menu-bar-mode 0)
-  (when window-system
-    (scroll-bar-mode -1))
+  (scroll-bar-mode -1)
+  (fringe-mode '(4 . 0))
 #+END_SRC
 
 *** Backups
@@ -216,10 +216,12 @@ Clocking
     :prefix  ","
     :states  'normal
     :keymaps 'org-mode-map
-    "C" '(:ignore t :which-key "clock")
+    "C"  '(:ignore t :which-key "clock")
     "Ci" 'org-clock-in
     "Co" 'org-clock-out
     ";"  'org-columns
+    "tE" 'org-toggle-pretty-entities
+    "tn" 'org-table-create
     )
 #+END_SRC
 
