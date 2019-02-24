@@ -23,11 +23,13 @@
 
 ** Packages
 #+BEGIN_SRC emacs-lisp
-  (setq ivy-initial-inputs-alist nil)
   (use-package avy     :ensure t
     :config
+      (setq ivy-initial-inputs-alist nil)
       (setq ivy-use-virtual-buffers t)
       (setq ivy-count-format "(%d/%d) ")
+      (setq ivy-re-builders-alist
+            '((t . ivy--regex-ignore-order)))
     )
   (use-package general :ensure t)
   (use-package swiper :ensure t)
@@ -57,6 +59,47 @@
   (use-package all-the-icons
     :ensure t
   )
+  (use-package projectile
+    :ensure t
+    :defer t
+    :diminish projectile-mode
+    :config
+    (projectile-mode)
+    (setq projectile-completion-system 'ivy)
+    )
+  (use-package company
+    :ensure t
+    :diminish company-mode
+    :config
+    (global-company-mode)
+    (setq company-idle-delay 0.2)
+    (setq company-selection-wrap-around t)
+    )
+  (use-package flycheck
+   :ensure t
+   :init (global-flycheck-mode)
+  )
+  (use-package lsp-mode
+   :ensure t
+  )
+  (use-package company-lsp
+   :ensure t
+  )
+  (use-package lsp-ui
+   :ensure t
+  )
+  (general-define-key
+    :keymaps 'magit-active-map
+    :prefix ","
+    "k" 'with-editor-cancel
+    "c" 'with-editor-finish
+    )
+  (general-define-key
+    :keymaps 'company-active-map
+    "tab" 'company-complete
+    "C-j" 'company-select-next
+    "C-k" 'company-select-previous
+    )
   (general-define-key
     :states '(visual)
     "s" 'evil-surround-region
@@ -75,10 +118,12 @@
     :non-normal-prefix "C-SPC"
 
     "j"  '(:ignore t :which-key "jump")
-    "js" 'swiper
+    "js" '(counsel-grep-or-swiper :which-key "swiper")
     "jl" 'avy-goto-line
     "jk" 'avy-goto-char
-    "jb" 'ivy-switch-buffer
+    "bb" 'ivy-switch-buffer
+    "bn" 'next-buffer
+    "bp" 'previous-buffer
 
     "SPC" 'counsel-M-x
     "qq"   'kill-emacs
@@ -87,8 +132,14 @@
     "fs"  'save-buffer
     "fed" '(lambda () (interactive) (find-file "~/.emacs.d/configuration.org"))
     "fer" '(lambda () (interactive) (load-file "~/.emacs.d/init.el"))
+    "fen" '(lambda () (interactive) (find-file "/sudo:root@localhost:/etc/nixos/configuration.nix"))
     "ff"  'counsel-find-file
+    "fr"  'counsel-recentf
     "fE"  'sudo-edit
+
+    "pf"  'projectile-find-file
+    "pR"  'projectile-replace
+    "pp"  'projectile-switch-project
 
     "h"   '(:ignore t :which-key "help")
     "hd"  '(:ignore t :which-key "describe")
@@ -131,7 +182,7 @@ Disable menu, scroll bar:
   (tool-bar-mode 0)
   (menu-bar-mode 0)
   (scroll-bar-mode -1)
-  (fringe-mode '(4 . 0))
+  (fringe-mode '(0 . 0))
 #+END_SRC
 
 *** Backups
@@ -167,6 +218,7 @@ Disable menu, scroll bar:
 
 ** Theme
 #+BEGIN_SRC emacs-lisp
+  (set-frame-font "DejaVu Sans Mono-11")
   (use-package doom-themes :ensure t)
   (load-theme 'doom-city-lights t)
 #+END_SRC
@@ -223,6 +275,16 @@ Clocking
     "tE" 'org-toggle-pretty-entities
     "tn" 'org-table-create
     )
+#+END_SRC
+
+** Haskell
+#+BEGIN_SRC emacs-lisp
+(use-package haskell-mode :ensure t)
+#+END_SRC
+
+** Nix
+#+BEGIN_SRC emacs-lisp
+(use-package nix-mode :ensure t)
 #+END_SRC
 
 ** Contact
