@@ -89,7 +89,8 @@
    :ensure t
   )
   (general-define-key
-    :keymaps 'magit-active-map
+    :states '(normal motion)
+    :keymaps 'with-editor-mode-map
     :prefix ","
     "k" 'with-editor-cancel
     "c" 'with-editor-finish
@@ -124,6 +125,9 @@
     "bb" 'ivy-switch-buffer
     "bn" 'next-buffer
     "bp" 'previous-buffer
+
+    "c"  '(:ignore t :which-key "comment")
+    "cl" 'comment-line
 
     "SPC" 'counsel-M-x
     "qq"   'kill-emacs
@@ -279,12 +283,47 @@ Clocking
 
 ** Haskell
 #+BEGIN_SRC emacs-lisp
-(use-package haskell-mode :ensure t)
+(use-package lsp-haskell :ensure t)
+(use-package haskell-mode
+  :defer t
+  :init
+  (require 'lsp-ui)
+  (require 'lsp-haskell)
+  (add-hook 'haskell-mode-hook #'lsp)
+  (setq default-nix-wrapper
+    (lambda (args)
+      (append
+        ;; Change this to match your home directory/preferences
+        (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
+                   (list (mapconcat 'identity args " "))
+          )
+          (list (nix-current-sandbox))
+        )
+      )
+    )
+  (setq haskell-nix-wrapper
+        (lambda (args)
+          (apply default-nix-wrapper (list (append args (list "--ghc-option" "-Wwarn"))))
+          )
+        )
+  (setq haskell-process-type 'cabal-new-repl)
+  ;; Haskell repl session that runs in the background
+  (setq haskell-process-wrapper-function haskell-nix-wrapper)
+  ;; Haskell-ide-engine process
+  (setq lsp-haskell-process-wrapper-function default-nix-wrapper)
+  (setq haskell-completing-read-function 'completing-read)
+
+  ;; Load lsp-haskell when we activate haskell mode in a buffer
+  (add-hook 'haskell-mode-hook #'lsp-haskell-enable)
+  ;; Keep our haskell tags up to date (used for jumping to defn. etc.)
+  (custom-set-variables '(haskell-tags-on-save t))
+  )
 #+END_SRC
 
 ** Nix
 #+BEGIN_SRC emacs-lisp
 (use-package nix-mode :ensure t)
+(use-package nix-sandbox :ensure t)
 #+END_SRC
 
 ** Contact
