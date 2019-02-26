@@ -47,6 +47,22 @@
     :config
     (global-evil-surround-mode 1)
     )
+  ; Overload shifts so that they don't lose the selection
+  (general-define-key
+    :states '(visual)
+    ">" 'djoyner/evil-shift-right-visual
+    "<" 'djoyner/evil-shift-left-visual
+    )
+  (defun djoyner/evil-shift-left-visual ()
+    (interactive)
+    (evil-shift-left (region-beginning) (region-end))
+    (evil-normal-state)
+    (evil-visual-restore))
+  (defun djoyner/evil-shift-right-visual ()
+    (interactive)
+    (evil-shift-right (region-beginning) (region-end))
+    (evil-normal-state)
+    (evil-visual-restore))
   (use-package magit
     :ensure t
     )
@@ -93,7 +109,7 @@
     :keymaps 'with-editor-mode-map
     :prefix ","
     "k" 'with-editor-cancel
-    "c" 'with-editor-finish
+    "," 'with-editor-finish
     )
   (general-define-key
     :keymaps 'company-active-map
@@ -158,6 +174,7 @@
     "tf" '(:ignore t :which-key "fill")
     "tfm" 'auto-fill-mode
     "tfr" 'fill-region
+    "ta"  'align-regexp
 
     "tt" '(:ignore t :which-key "theme")
     "ttl" 'counsel-load-theme
@@ -172,7 +189,9 @@
     "wj" 'evil-window-down
     "wk" 'evil-window-up
     "wh" 'evil-window-left
+    "wH" 'evil-window-move-far-left
     "wl" 'evil-window-right
+    "wL" 'evil-window-move-far-right
 
     "g" '(:ignore t :which-key "git")
     "gs" 'magit
@@ -283,41 +302,67 @@ Clocking
 
 ** Haskell
 #+BEGIN_SRC emacs-lisp
-(use-package lsp-haskell :ensure t)
-(use-package haskell-mode
-  :defer t
-  :init
-  (require 'lsp-ui)
-  (require 'lsp-haskell)
-  (add-hook 'haskell-mode-hook #'lsp)
-  (setq default-nix-wrapper
-    (lambda (args)
-      (append
-        ;; Change this to match your home directory/preferences
-        (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
-                   (list (mapconcat 'identity args " "))
-          )
-          (list (nix-current-sandbox))
-        )
+  (use-package lsp-haskell :ensure t)
+  (use-package haskell-mode
+    :defer t
+    :init
+    ;; (require 'lsp-ui)
+    ;; (require 'lsp-haskell)
+    ;; (add-hook 'haskell-mode-hook #'lsp)
+    (setq default-nix-wrapper
+      (lambda (args)
+	(append
+	  ;; Change this to match your home directory/preferences
+	  (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
+		     (list (mapconcat 'identity args " "))
+	    )
+	    (list (nix-current-sandbox))
+	  )
+	)
       )
-    )
-  (setq haskell-nix-wrapper
-        (lambda (args)
-          (apply default-nix-wrapper (list (append args (list "--ghc-option" "-Wwarn"))))
-          )
-        )
-  (setq haskell-process-type 'cabal-new-repl)
-  ;; Haskell repl session that runs in the background
-  (setq haskell-process-wrapper-function haskell-nix-wrapper)
-  ;; Haskell-ide-engine process
-  (setq lsp-haskell-process-wrapper-function default-nix-wrapper)
-  (setq haskell-completing-read-function 'completing-read)
+    (setq haskell-nix-wrapper
+	  (lambda (args)
+	    (apply default-nix-wrapper (list (append args (list "--ghc-option" "-Wwarn"))))
+	    )
+	  )
+    (setq haskell-process-type 'cabal-new-repl)
+    ;; Haskell repl session that runs in the background
+    (setq haskell-process-wrapper-function haskell-nix-wrapper)
+    ;; Haskell-ide-engine process
+    (setq lsp-haskell-process-wrapper-function default-nix-wrapper)
+    (setq haskell-completing-read-function 'completing-read)
+    (setq haskell-process-suggest-hoogle-imports t)
+    (setq haskell-process-suggest-add-package t)
+    (setq haskell-process-log t)
 
-  ;; Load lsp-haskell when we activate haskell mode in a buffer
-  (add-hook 'haskell-mode-hook #'lsp-haskell-enable)
-  ;; Keep our haskell tags up to date (used for jumping to defn. etc.)
-  (custom-set-variables '(haskell-tags-on-save t))
-  )
+    ;; Load lsp-haskell when we activate haskell mode in a buffer
+    ;; (add-hook 'haskell-mode-hook #'lsp-haskell-enable)
+    ;; Keep our haskell tags up to date (used for jumping to defn. etc.)
+    (custom-set-variables '(haskell-tags-on-save t))
+    )
+    (general-define-key
+      :states '(normal motion)
+      :keymaps 'haskell-mode-map
+      :prefix ","
+      "ss" 'haskell-interactive-switch
+      "sb" 'haskell-process-load-file
+      "gi" 'haskell-navigate-imports
+      "gg" 'haskell-mode-tag-find
+      "gc" 'haskell-cabal-visit-file
+      "ds" 'haskell-mode-toggle-scc-at-point
+      "hi" 'haskell-process-do-info
+      "ht" 'haskell-process-do-type
+      "hh" 'haskell-hoogle-lookup-from-local
+      "hs" 'haskell-menu
+      )
+    (general-define-key
+      :states '(normal motion)
+      :keymaps 'haskell-interactive-mode-map
+      :prefix ","
+      "ss" 'haskell-interactive-switch-back
+      "pr" 'haskell-process-restart
+      "pt" 'haskell-session-change-target
+      )
 #+END_SRC
 
 ** Nix
