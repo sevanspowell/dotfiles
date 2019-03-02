@@ -1,323 +1,394 @@
-* Samuel Evans-Powell Emacs Configuration
-** General
+* Emacs Configuration
 
+** Package management
 #+BEGIN_SRC emacs-lisp
-(setq delete-old-versions -1)    ; delete excess backup versions silently
-(setq version-control t)         ; use version control
-(setq vc-make-backup-files t)      ; Make backup files even when in version controlled dir
-(setq backup-directory-alist `(("." . "~/.emacs.d/backups"))) ; Which directory to put backup files in
-(setq vc-follow-symlinks t)        ; Don't ask for confirmation when opening symlinked file
-(setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t))) ; Transform backups file name
-(setq inhibit-startup-screen t)    ; Suppress useless and old-school startup screen
-(setq ring-bell-function 'ignore)  ; Silent bell when you make a mistake
-(setq coding-system-for-read 'utf-8) ; Use UTF-8 by defaul
-(setq coding-system-for-write 'utf-8)
-(setq sentence-end-double-space nil)    ; Sentence should end with only a point.
-(setq default-fill-column 80)           ; Toggle wrapping text at the 80th character
-(setq initial-scratch-message "") ; Print a default message in the empty scratch buffer opened at startup
+(require 'package)
 
-(setq package-enable-at-startup nil) ; tells emacs not to load any packages before starting up
-;; the following lines tell emacs where on the internet to look up
-;; for new packages.
-(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
-       ("gnu"       . "http://elpa.gnu.org/packages/")
-       ("melpa"     . "https://melpa.org/packages/")
-       ("marmalade" . "http://marmalade-repo.org/packages/")))
+;; Don't load any packages on startup
+(setq package-enable-at-startup nil)
+
+(setq package-archives '(("org"   . "http://orgmode.org/elpa/")
+                         ("gnu"   . "http://elpa.gnu.org/packages/")
+                         ("melpa" . "https://melpa.org/packages/")))
+
 (package-initialize)
 
-;; Bootstrap `use-package'
-(unless (package-installed-p 'use-package) ; unless it is already installed
-  (package-refresh-contents) ; updage packages archive
-  (package-install 'use-package)) ; and install the most recent version of use-package
+;; If 'use-package' isn't installed...
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
 
-(require 'use-package) ; guess what this one does too ?
+(require 'use-package)
+#+END_SRC
 
-;; Taken from Spacemacs: func.el:249
-(defun sep/counsel-up-directory-no-error ()
-  "`counsel-up-directory' ignoring errors."
-  (interactive)
-  (ignore-errors
-    (call-interactively 'counsel-up-directory)))
-
-(use-package general :ensure t
-  :config
+** Packages
+#+BEGIN_SRC emacs-lisp
+  (use-package avy     :ensure t
+    :config
+      (setq ivy-initial-inputs-alist nil)
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-count-format "(%d/%d) ")
+      (setq ivy-re-builders-alist
+            '((t . ivy--regex-ignore-order)))
+    )
+  (use-package general :ensure t)
+  (use-package swiper :ensure t)
+  (use-package counsel :ensure t)
+  (use-package which-key :ensure t
+    :config
+    (which-key-mode 1)
+    )
+  (use-package evil :ensure t
+    :config
+    (evil-mode 1)
+    )
+  (use-package evil-surround
+    :ensure t
+    :config
+    (global-evil-surround-mode 1)
+    )
+  ; Overload shifts so that they don't lose the selection
+  (general-define-key
+    :states '(visual)
+    ">" 'djoyner/evil-shift-right-visual
+    "<" 'djoyner/evil-shift-left-visual
+    )
+  (defun djoyner/evil-shift-left-visual ()
+    (interactive)
+    (evil-shift-left (region-beginning) (region-end))
+    (evil-normal-state)
+    (evil-visual-restore))
+  (defun djoyner/evil-shift-right-visual ()
+    (interactive)
+    (evil-shift-right (region-beginning) (region-end))
+    (evil-normal-state)
+    (evil-visual-restore))
+  (use-package magit
+    :ensure t
+    )
+  (use-package evil-magit
+    :ensure t
+  )
+  (use-package sudo-edit
+    :ensure t
+  )
+  (use-package all-the-icons
+    :ensure t
+  )
+  (use-package projectile
+    :ensure t
+    :defer t
+    :diminish projectile-mode
+    :config
+    (projectile-mode)
+    (setq projectile-completion-system 'ivy)
+    )
+  (use-package company
+    :ensure t
+    :diminish company-mode
+    :config
+    (global-company-mode)
+    (setq company-idle-delay 0.2)
+    (setq company-selection-wrap-around t)
+    )
+  (use-package flycheck
+   :ensure t
+   :init (global-flycheck-mode)
+  )
+  (use-package lsp-mode
+   :ensure t
+  )
+  (use-package company-lsp
+   :ensure t
+  )
+  (use-package lsp-ui
+   :ensure t
+  )
+  (general-define-key
+    :states '(normal motion)
+    :keymaps 'with-editor-mode-map
+    :prefix ","
+    "k" 'with-editor-cancel
+    "," 'with-editor-finish
+    )
+  (general-define-key
+    :keymaps 'company-active-map
+    "tab" 'company-complete
+    "C-j" 'company-select-next
+    "C-k" 'company-select-previous
+    )
+  (general-define-key
+    :states '(visual)
+    "s" 'evil-surround-region
+    "S" 'evil-substitute
+    )
+  (general-define-key
+    :keymaps 'ivy-minibuffer-map
+    "C-j" 'ivy-next-line
+    "C-k" 'ivy-previous-line
+    "C-l" 'ivy-alt-done
+    "C-h" 'counsel-up-directory
+    )
   (general-define-key
     :states '(normal visual insert emacs)
     :prefix "SPC"
     :non-normal-prefix "C-SPC"
-    "/"   'swiper
-    "b"	  '(:ignore t :which-key "buffers")
-    "bb"      'ivy-switch-buffer
 
-    "f"   '(:ignore t :which-key "files")
-    "ff"      'counsel-find-file
-    "fr"      'counsel-recentf
-    "fs"      'save-buffer
-    "fe"  '(:ignore t :which-key "config")
-    "fed"     '(lambda () (interactive) (switch-to-buffer (find-file-noselect "~/.emacs.d/configuration.org")))
-    "fer"     '(lambda () (interactive) (org-babel-load-file "~/.emacs.d/configuration.org"))
-
-    "h"  '(:ignore t :which-key "help")
-    "hd"   '(:ignore t :which-key "describe")
-    "hdv"    'counsel-describe-variable
-    "hdf"    'counsel-describe-function
-    "hdk"    'describe-key
-
-    "t"  '(:ignore t :which-key "utility")
-    "twm"   'whitespace-mode
-    "twx"   'delete-trailing-whitespace
+    "j"  '(:ignore t :which-key "jump")
+    "js" '(counsel-grep-or-swiper :which-key "swiper")
+    "jl" 'avy-goto-line
+    "jk" 'avy-goto-char
+    "bb" 'ivy-switch-buffer
+    "bn" 'next-buffer
+    "bp" 'previous-buffer
+    "bd" 'evil-delete-buffer
 
     "c"  '(:ignore t :which-key "comment")
-    "cl"    'comment-line
+    "cl" 'comment-line
 
-    "w"  '(:ignore t :which-key "window")
-    "wj"    'evil-window-down
-    "wk"    'evil-window-up
-    "wh"    'evil-window-left
-    "wl"    'evil-window-right
-    "w/"    'evil-window-vsplit
-    "w-"    'evil-window-split
-    "wd"    'evil-window-delete
-    "wW"    'ace-select-window
-    "wf"    '(:ignore t :which-key "frame")
-    "wfn"     'make-frame
-
-    "l"   '(:ignore t :which-key "fill")
-    "lr"  'fill-region
-    "p"   '(:ignore t :which-key "project")
-    "pf"  '(counsel-git :which-key "find file in git dir")
     "SPC" 'counsel-M-x
+    "qq"   'kill-emacs
 
-    "q"   '(:ignore t :which-key "quit")
-    "qq"    'save-buffers-kill-terminal
+    "f"   '(:ignore t :which-key "files")
+    "fs"  'save-buffer
+    "fed" '((lambda () (interactive) (find-file "~/.emacs.d/configuration.org")) :which-key "open-emacs-config")
+    "fer" '((lambda () (interactive) (load-file "~/.emacs.d/init.el")) :which-key "reload-emacs-config")
+    "fen" '((lambda () (interactive) (find-file "/sudo:root@localhost:/etc/nixos/configuration.nix")) :which-key "open-nix-config")
+    "fo"  '(:ignore t :which-key "organization")
+    "foi" '((lambda () (interactive) (find-file "~/org/inbox.org")) :which-key "open-org-inbox")
+    "fot" '((lambda () (interactive) (find-file "~/org/timesheets/tiny.org")) :which-key "open-org-timesheet")
+    "ff"  'counsel-find-file
+    "fr"  'counsel-recentf
+    "fE"  'sudo-edit
 
-    "g"   '(:ignore t :which-key "magit")
-    "gs"    'magit-status
-    )
-    (general-define-key
-       :states '(visual)
-       "s" 'evil-surround-region
-    )
-    (general-define-key
-       :keymaps 'ivy-minibuffer-map
-       "C-j" 'ivy-next-line
-       "C-k" 'ivy-previous-line
-       "C-l" 'ivy-alt-done
-       "C-h" 'sep/counsel-up-directory-no-error
-    )
-    (general-define-key
-       :keymaps 'haskell-mode-map
-       :states '(normal visual emacs)
-       :prefix ","
-       "i"  'haskell-navigate-imports
-       "I"  'haskell-navigate-imports-return
-       "f"  '(:ignore t :which-key "format")
-       "fi"   'haskell-mode-format-imports
-       "fb"   'haskell-mode-stylish-buffer
-       "fr"   'hindent-reformat-region
-       "s"  '(:ignore t :which-key "interactive")
-       "ss"   'haskell-interactive-switch
-       "sb"   'haskell-process-load-or-reload
-    )
-    (general-define-key
-       :keymaps 'haskell-interactive-mode-map
-       :states '(normal visual insert emacs)
-       :prefix ","
-       "s"  '(:ignore t :which-key "interactive")
-       "ss"   'haskell-interactive-switch-back
-    )
-    (general-define-key
-       :keymaps 'haskell-interactive-mode-map
-       :states '(normal visual insert emacs)
-       "C-j" 'haskell-interactive-mode-history-next
-       "C-k" 'haskell-interactive-mode-history-previous
-    )
-    (general-define-key
-       :keymaps 'magit-mode-map
-       "C-j" 'magit-next-line
-       "C-k" 'magit-previous-line
-       "C-l" 'magit-go-forward
-       "C-h" 'magit-go-backward
-    )
+    "pf"  'projectile-find-file
+    "pR"  'projectile-replace
+    "pp"  'projectile-switch-project
+    "ps"  'counsel-git-grep
+
+    "h"   '(:ignore t :which-key "help")
+    "hd"  '(:ignore t :which-key "describe")
+    "hdv" '(counsel-describe-variable :which-key "describe-variable")
+    "hdf" '(counsel-describe-function :which-key "describe-function")
+    "hdF" '(counsel-describe-face     :which-key "describe-face")
+    "hdk" 'describe-key
+
+    "t" '(:ignore t :which-key "utility")
+    "tw" '(:ignore t :which-key "whitespace")
+    "twm" 'whitespace-mode
+    "twx" 'delete-trailing-whitespace
+    "tf" '(:ignore t :which-key "fill")
+    "tfm" 'auto-fill-mode
+    "tfr" 'fill-region
+    "ta"  'align-regexp
+    "tl"  'toggle-truncate-lines
+
+    "tt" '(:ignore t :which-key "theme")
+    "ttl" 'counsel-load-theme
+
+    "i"  '(:ignore t :which-key "insert")
+    "iu" 'counsel-unicode-char
+
+    "w" '(:ignore t :which-key "window")
+    "wd" 'evil-window-delete
+    "w-" 'evil-window-split
+    "w/" 'evil-window-vsplit
+    "wj" 'evil-window-down
+    "wk" 'evil-window-up
+    "wh" 'evil-window-left
+    "wH" 'evil-window-move-far-left
+    "wl" 'evil-window-right
+    "wL" 'evil-window-move-far-right
+
+    "g" '(:ignore t :which-key "git")
+    "gs" 'magit
+
+    "ol" 'sort-lines
+
+    "'" '((lambda () (interactive) (ansi-term "bash")) :which-key "terminal")
   )
-
-(use-package ivy :ensure t)
-
-(use-package avy :ensure t
-  :commands (avy-goto-word-1))
-
-(use-package swiper :ensure t)
-(use-package counsel :ensure t)
-(use-package which-key
-  :init
-    (setq which-key-allow-evil-operators t)
-    (setq which-key-show-operator-state-maps t)
-  :config
-    (which-key-mode)
-  :ensure t)
-(use-package evil :ensure t)
-
-(evil-mode t)
-(which-key-mode t)
 #+END_SRC
+
+** General
+
+Disable menu, scroll bar:
+#+BEGIN_SRC emacs-lisp
+  (tool-bar-mode 0)
+  (menu-bar-mode 0)
+  (scroll-bar-mode -1)
+  (fringe-mode '(0 . 0))
+#+END_SRC
+
+*** Backups
+#+BEGIN_SRC emacs-lisp
+  ; Use version control
+  (setq version-control t)
+  ; Make backups even when in ver-controlled dir
+  (setq vc-make-backup-files t)
+  ; Which directory to put backup files in
+  (setq backup-directory-alist `(("." . "~/.emacs.d/backups")) )
+  ; Delete excess backup versions silently.
+  (setq delete-old-versions -1)
+#+END_SRC
+
+*** Other
+#+BEGIN_SRC emacs-lisp
+ ; Don't ask for confirmation to followsymlinks
+ (setq vc-follow-symlinks t )
+ ; Transform backups file name
+ (setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t)) )
+ ; Inhibit useless and old-school startup screen
+ (setq inhibit-startup-screen t )
+ ; Silent bell when you make a mistake
+ (setq ring-bell-function 'ignore )
+ ; Use utf-8 by default
+ (setq coding-system-for-read 'utf-8 )
+ (setq coding-system-for-write 'utf-8 )
+ ; Sentence SHOULD end with only a point.
+ (setq sentence-end-double-space nil)
+ ; Toggle wrapping text at the 80th character
+ (setq default-fill-column 80)
+#+END_SRC
+
+** Theme
+#+BEGIN_SRC emacs-lisp
+  (set-frame-font "DejaVu Sans Mono-11")
+  (use-package doom-themes :ensure t)
+  (use-package base16-theme :ensure t)
+  (load-theme 'base16-ashes t)
+#+END_SRC
+
+** Org mode
 
 Activate org-mode src code highlighting:
 
 #+BEGIN_SRC emacs-lisp
-(setq org-src-fontify-natively t)
+  (setq org-src-fontify-natively t)
 #+END_SRC
 
-Enable evil-surround-mode:
-
+Capture templates for: TODO tasks, Notes, appointments, phone calls,
+meetings, and org-protocol.
 #+BEGIN_SRC emacs-lisp
-(use-package evil-surround
-  :ensure t
-  :config
-  (global-evil-surround-mode 1))
+  (setq org-capture-templates
+    (quote (("t" "Todo" entry (file org-inbox-file)
+    "* TODO %?\n%U\n%a\n" :clock-in t :clock-resume t)
+    ("n" "Note" entry (file org-inbox-file)
+    "* %? :NOTE:\n%U\n%a\n" :clock-in t :clock-resume t)
+    ("m" "Meeting" entry (file org-inbox-file)
+    "* MEETING with %? :MEETING:\n%U" :clock-in t :clock-resume t)
+    ("p" "Phone call" entry (file org-inbox-file)
+    "* PHONE %? :PHONE:\n%U" :clock-in t :clock-resume t)
+    ("h" "Habit" entry (file org-inbox-file)
+    "* TODO %?\n%U\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n")
+    ))
+    )
+  (setq org-global-properties (quote (("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
+    ("STYLE_ALL" . "habit")))
+    )
+
+  (setq org-enforce-todo-dependencies t)
+
+  (setq org-todo-keywords
+    (quote ((sequence "NEXT(n)" "TODO(t)" "|" "DONE(d)")
+    (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)" "PHONE" "MEETING"))))
 #+END_SRC
 
-Disable menu, scroll bar:
+Clocking
 #+BEGIN_SRC emacs-lisp
-(tool-bar-mode 0)
-(menu-bar-mode 0)
-(when window-system
-  (scroll-bar-mode -1))
-#+END_SRC
+  (setq org-columns-default-format "%40ITEM(Task) %17Effort(Effort){:} %10CLOCKSUM")
+  (setq org-tags-column -77)
+  (setq org-clock-out-remove-zero-time-clocks t)
 
-No tabs
-#+BEGIN_SRC emacs-lisp
-(setq-default indent-tabs-mode nil)
-#+END_SRC
-
-Get path from shell
-#+BEGIN_SRC emacs-lisp
-(use-package exec-path-from-shell :ensure t)
-(exec-path-from-shell-initialize)
-#+END_SRC
-
-** Theme
-
-#+BEGIN_SRC emacs-lisp
-(use-package doom-themes :ensure t)
-;;(use-package spacemacs-theme
-;;  :defer t
-;;  :init (load-theme 'spacemacs-light t))
-(load-theme 'doom-city-lights t)
-;;(load-theme 'birds-of-paradise-plus t)
-(set-default-font "Fira Code 10")
-(add-to-list 'default-frame-alist '(font . "Fira Code 10"))
+  (general-define-key
+    :prefix  ","
+    :states  'normal
+    :keymaps 'org-mode-map
+    "C"  '(:ignore t :which-key "clock")
+    "Ci" 'org-clock-in
+    "Co" 'org-clock-out
+    ";"  'org-columns
+    "tE" 'org-toggle-pretty-entities
+    "tn" 'org-table-create
+    )
 #+END_SRC
 
 ** Haskell
-
 #+BEGIN_SRC emacs-lisp
-(use-package haskell-mode :ensure t)
+  (use-package lsp-haskell :ensure t)
+  (use-package haskell-mode
+    :defer t
+    :init
+    ;; (require 'lsp-ui)
+    ;; (require 'lsp-haskell)
+    ;; (add-hook 'haskell-mode-hook #'lsp)
+    (setq default-nix-wrapper
+      (lambda (args)
+	(append
+	  ;; Change this to match your home directory/preferences
+	  (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
+		     (list (mapconcat 'identity args " "))
+	    )
+	    (list (nix-current-sandbox))
+	  )
+	)
+      )
+    (setq haskell-nix-wrapper
+	  (lambda (args)
+	    (apply default-nix-wrapper (list (append args (list "--ghc-option" "-Wwarn"))))
+	    )
+	  )
+    (setq haskell-process-type 'cabal-new-repl)
+    ;; Haskell repl session that runs in the background
+    (setq haskell-process-wrapper-function haskell-nix-wrapper)
+    ;; Haskell-ide-engine process
+    (setq lsp-haskell-process-wrapper-function default-nix-wrapper)
+    (setq haskell-completing-read-function 'completing-read)
+    (setq haskell-process-suggest-hoogle-imports t)
+    (setq haskell-process-suggest-add-package t)
+    (setq haskell-process-log t)
 
-(use-package hindent :ensure t)
-(add-hook 'haskell-mode-hook #'hindent-mode)
-
-(custom-set-variables '(haskell-tags-on-save t))
-
-(custom-set-variables
-  '(haskell-process-suggest-remove-import-lines t)
-  '(haskell-process-auto-import-loaded-modules t)
-  '(haskell-process-log t))
-
-(custom-set-variables '(haskell-process-type 'cabal-repl))
-
-(setq haskell-interactive-popup-errors nil)
-
-;(use-package ghc :ensure t)
-;(autoload 'ghc-init "ghc" nil t)
-;(autoload 'ghc-debug "ghc" nil t)
-;(add-hook 'haskell-mode-hook (lambda () (ghc-init)))
-
-;(use-package company-ghc :ensure t)
-;(add-hook 'haskell-mode-hook 'company-mode)
-;(add-to-list 'company-backends 'company-ghc)
-;(custom-set-variables '(company-ghc-show-info t))
-
-;(use-package dante
-;  :ensure t
-;  :after haskell-mode
-;  :commands 'dante-mode
-;  :init
-;  (add-hook 'haskell-mode-hook 'dante-mode)
-;  (add-hook 'haskell-mode-hook 'flycheck-mode))
-#+END_SRC
-   
-** Javascript
-#+BEGIN_SRC emacs-lisp
-(setq js-indent-level 2)
-#+END_SRC
-
-** Magit
-#+BEGIN_SRC emacs-lisp
-(use-package magit :ensure t)
-#+END_SRC
-   
-** Org
-#+BEGIN_SRC emacs-lisp
-(setq org-html-head-include-default-style nil)
-
-(setq org-publish-project-alist
-    ;; org-notes - org files are transformed to html
-    ;; org-static - static files are just copied
-    ;; org - both
-    (quote (("org-notes"
-            :base-directory "~/Documents/code/web/sevanspowell/"
-            :base-extension "org"
-            :publishing-directory "~/Documents/code/web/sevanspowell/docs"
-            :recursive t
-            :publishing-function org-html-publish-to-html
-            :headline-levels 4
-            :auto-preamble t
-            :section-numbers nil
-            :exclude "org-templates\\|docs"
-            )
-            ("org-static"
-            :base-directory "~/Documents/code/web/sevanspowell/"
-            :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf\\|svg"
-            :publishing-directory "~/Documents/code/web/sevanspowell/docs"
-            :recursive t
-            :publishing-function org-publish-attachment
-            :section-numbers nil
-            ;; :auto-sitemap t                  ; Generate sitemap.org automagically...
-            ;; :sitemap-filename "sitemap.org"  ; ... call it sitemap.org (it's the default)...
-            ;; :sitemap-title "Sitemap"         ; ... with title 'Sitemap'.
-            )
-            ("org" :components ("org-notes" "org-static"))
-
-            ("remote-org-notes"
-            :base-directory "~/Documents/code/web/sevanspowell/"
-            :base-extension "org"
-            :publishing-directory "~/Documents/code/web/sevanspowell/docs"
-            :recursive t
-            :publishing-function org-html-publish-to-html
-            :headline-levels 4
-            :auto-preamble t
-            :section-numbers nil
-            :exclude "org-templates\\|docs"
-            )
-            ("remote-org-static"
-            :base-directory "~/Documents/code/web/sevanspowell/"
-            :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf\\|svg"
-            :publishing-directory "~/Documents/code/web/sevanspowell/docs"
-            :recursive t
-            :publishing-function org-publish-attachment
-            :section-numbers nil
-            ;; :auto-sitemap t                  ; Generate sitemap.org automagically...
-            ;; :sitemap-filename "sitemap.org"  ; ... call it sitemap.org (it's the default)...
-            ;; :sitemap-title "Sitemap"         ; ... with title 'Sitemap'.
-            )
-            ("remote-org" :components ("remote-org-notes" "remote-org-static"))
-            )))
-
-(setq org-html-postamble-format '("en" "<p class=\"author\">Author: %a (%e)</p>\n<p class=\"date\">Date: %d</p>\n<p class=\"creator\">%c</p>\n"))
+    ;; Load lsp-haskell when we activate haskell mode in a buffer
+    ;; (add-hook 'haskell-mode-hook #'lsp-haskell-enable)
+    ;; Keep our haskell tags up to date (used for jumping to defn. etc.)
+    (custom-set-variables '(haskell-tags-on-save t))
+    )
+    (general-define-key
+      :states '(normal motion)
+      :keymaps 'haskell-mode-map
+      :prefix ","
+      "ss" 'haskell-interactive-switch
+      "sb" 'haskell-process-load-file
+      "gi" 'haskell-navigate-imports
+      "gg" 'haskell-mode-tag-find
+      "gc" 'haskell-cabal-visit-file
+      "ds" 'haskell-mode-toggle-scc-at-point
+      "hi" 'haskell-process-do-info
+      "ht" 'haskell-process-do-type
+      "hh" 'haskell-hoogle-lookup-from-local
+      "hs" 'haskell-menu
+      )
+    (general-define-key
+      :states '(normal motion)
+      :keymaps 'haskell-interactive-mode-map
+      :prefix ","
+      "ss" 'haskell-interactive-switch-back
+      "pr" 'haskell-process-restart
+      "pt" 'haskell-session-change-target
+      )
 #+END_SRC
 
-htmlize library for syntax-highlighting on HTML export:
-
+** Nix
 #+BEGIN_SRC emacs-lisp
-(use-package htmlize :ensure t)
+(use-package nix-mode :ensure t)
+(use-package nix-sandbox :ensure t)
 #+END_SRC
+
+** Terminal
+#+BEGIN_SRC emacs-lisp
+(setq ansi-color-faces-vector
+   [default bold shadow italic underline bold bold-italic bold])
+#+END_SRC
+
+** Contact
+
+mail@sevanspowell.net

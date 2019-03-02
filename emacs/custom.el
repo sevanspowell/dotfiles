@@ -13,7 +13,7 @@
  '(jdee-db-spec-breakpoint-face-colors (cons "#10151C" "#384551"))
  '(package-selected-packages
    (quote
-    (diminish projectile base16-theme nix-mode haskell-mode haskell tramp-mode evil-magit magit doom-themes evil-surround which-key evil counsel swiper avy general use-package)))
+    (ripgrep diminish projectile base16-theme nix-mode haskell-mode haskell tramp-mode evil-magit magit doom-themes evil-surround which-key evil counsel swiper avy general use-package)))
  '(vc-annotate-background "#1D252C")
  '(vc-annotate-color-map
    (list
