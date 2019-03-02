@@ -141,6 +141,7 @@
     "bb" 'ivy-switch-buffer
     "bn" 'next-buffer
     "bp" 'previous-buffer
+    "bd" 'evil-delete-buffer
 
     "c"  '(:ignore t :which-key "comment")
     "cl" 'comment-line
@@ -150,9 +151,12 @@
 
     "f"   '(:ignore t :which-key "files")
     "fs"  'save-buffer
-    "fed" '(lambda () (interactive) (find-file "~/.emacs.d/configuration.org"))
-    "fer" '(lambda () (interactive) (load-file "~/.emacs.d/init.el"))
-    "fen" '(lambda () (interactive) (find-file "/sudo:root@localhost:/etc/nixos/configuration.nix"))
+    "fed" '((lambda () (interactive) (find-file "~/.emacs.d/configuration.org")) :which-key "open-emacs-config")
+    "fer" '((lambda () (interactive) (load-file "~/.emacs.d/init.el")) :which-key "reload-emacs-config")
+    "fen" '((lambda () (interactive) (find-file "/sudo:root@localhost:/etc/nixos/configuration.nix")) :which-key "open-nix-config")
+    "fo"  '(:ignore t :which-key "organization")
+    "foi" '((lambda () (interactive) (find-file "~/org/inbox.org")) :which-key "open-org-inbox")
+    "fot" '((lambda () (interactive) (find-file "~/org/timesheets/tiny.org")) :which-key "open-org-timesheet")
     "ff"  'counsel-find-file
     "fr"  'counsel-recentf
     "fE"  'sudo-edit
@@ -165,6 +169,7 @@
     "hd"  '(:ignore t :which-key "describe")
     "hdv" '(counsel-describe-variable :which-key "describe-variable")
     "hdf" '(counsel-describe-function :which-key "describe-function")
+    "hdF" '(counsel-describe-face     :which-key "describe-face")
     "hdk" 'describe-key
 
     "t" '(:ignore t :which-key "utility")
@@ -195,6 +200,10 @@
 
     "g" '(:ignore t :which-key "git")
     "gs" 'magit
+
+    "ol" 'sort-lines
+
+    "'" 'eshell
   )
 #+END_SRC
 
@@ -243,7 +252,7 @@ Disable menu, scroll bar:
 #+BEGIN_SRC emacs-lisp
   (set-frame-font "DejaVu Sans Mono-11")
   (use-package doom-themes :ensure t)
-  (load-theme 'doom-city-lights t)
+  (load-theme 'base16-ashes t)
 #+END_SRC
 
 ** Org mode
