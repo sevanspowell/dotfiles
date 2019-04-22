@@ -2,27 +2,46 @@
 
 ** Package management
 #+BEGIN_SRC emacs-lisp
-(require 'package)
+  (require 'package)
 
-;; Don't load any packages on startup
-(setq package-enable-at-startup nil)
+  ;; Don't load any packages on startup
+  (setq package-enable-at-startup nil)
 
-(setq package-archives '(("org"   . "http://orgmode.org/elpa/")
-                         ("gnu"   . "http://elpa.gnu.org/packages/")
-                         ("melpa" . "https://melpa.org/packages/")))
+  (setq package-archives '(("org"   . "http://orgmode.org/elpa/")
+                           ("gnu"   . "http://elpa.gnu.org/packages/")
+                           ("melpa" . "https://melpa.org/packages/")))
 
-(package-initialize)
+  (package-initialize)
+  
+  ;; Use 'quelpa' and 'quelpa-use-package'
+  (if (require 'quelpa nil t)
+    (with-temp-buffer
+      (url-insert-file-contents "https://framagit.org/steckerhalter/quelpa/raw/master/bootstrap.el")
+      (eval-buffer)))
 
-;; If 'use-package' isn't installed...
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
+  (quelpa '(quelpa-use-package :fetcher git :url "https://framagit.org/steckerhalter/quelpa-use-package.git"))
+  (require 'quelpa-use-package)
+#+END_SRC
 
-(require 'use-package)
+** Custom
+#+BEGIN_SRC emacs-lisp
+;; Save custom variables to custom.el
+(setq custom-file (expand-file-name "custom.el"
+				    user-emacs-directory))
+(when (file-exists-p custom-file)
+  (load custom-file 'noerror))
 #+END_SRC
 
 ** Packages
 #+BEGIN_SRC emacs-lisp
+  (use-package diminish 
+    :ensure t
+    :init
+    (diminish 'undo-tree-mode)
+    (diminish 'which-key-mode)
+    (diminish 'flycheck-mode)
+  )
+
   (use-package avy     :ensure t
     :config
       (setq ivy-initial-inputs-alist nil)
@@ -46,6 +65,9 @@
     :ensure t
     :config
     (global-evil-surround-mode 1)
+    )
+  (use-package evil-nerd-commenter
+    :ensure t
     )
   ; Overload shifts so that they don't lose the selection
   (general-define-key
@@ -134,17 +156,21 @@
     :prefix "SPC"
     :non-normal-prefix "C-SPC"
 
+    "ap"  'counsel-list-processes
     "j"  '(:ignore t :which-key "jump")
     "js" '(counsel-grep-or-swiper :which-key "swiper")
     "jl" 'avy-goto-line
     "jk" 'avy-goto-char
     "bb" 'ivy-switch-buffer
+    "bs" '((lambda () (interactive) (switch-to-buffer (get-buffer-create "*scratch*"))) :which-key "switch-to-scratch-buffer")
+    "bm" '((lambda () (interactive) (switch-to-buffer (get-buffer-create "*Messages*"))) :which-key "switch-to-messages-buffer")
+    "br" 'revert-buffer
     "bn" 'next-buffer
     "bp" 'previous-buffer
     "bd" 'evil-delete-buffer
 
     "c"  '(:ignore t :which-key "comment")
-    "cl" 'comment-line
+    "cl" 'evilnc-comment-or-uncomment-lines
 
     "SPC" 'counsel-M-x
     "qq"   'kill-emacs
@@ -165,6 +191,7 @@
     "pR"  'projectile-replace
     "pp"  'projectile-switch-project
     "ps"  'counsel-git-grep
+    "p'"  'projectile-run-shell
 
     "h"   '(:ignore t :which-key "help")
     "hd"  '(:ignore t :which-key "describe")
@@ -199,6 +226,10 @@
     "wH" 'evil-window-move-far-left
     "wl" 'evil-window-right
     "wL" 'evil-window-move-far-right
+
+    "ut" 'undo-tree-visualize
+
+    "xtc" 'transpose-chars
 
     "g" '(:ignore t :which-key "git")
     "gs" 'magit
@@ -252,10 +283,11 @@ Disable menu, scroll bar:
 
 ** Theme
 #+BEGIN_SRC emacs-lisp
-  (set-frame-font "DejaVu Sans Mono-11")
+  (set-frame-font "DejaVu Sans Mono-8")
   (use-package doom-themes :ensure t)
+  (use-package nimbus-theme :ensure t)
   (use-package base16-theme :ensure t)
-  (load-theme 'base16-ashes t)
+  (load-theme 'nimbus t)
 #+END_SRC
 
 ** Org mode
@@ -284,7 +316,7 @@ meetings, and org-protocol.
     )
   (setq org-global-properties (quote (("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
     ("STYLE_ALL" . "habit")))
-    )
+    )  
 
   (setq org-enforce-todo-dependencies t)
 
@@ -296,6 +328,7 @@ meetings, and org-protocol.
 Clocking
 #+BEGIN_SRC emacs-lisp
   (setq org-columns-default-format "%40ITEM(Task) %17Effort(Effort){:} %10CLOCKSUM")
+  (setq org-duration-format (quote h:mm))
   (setq org-tags-column -77)
   (setq org-clock-out-remove-zero-time-clocks t)
 
@@ -312,10 +345,17 @@ Clocking
     )
 #+END_SRC
 
+** Nix
+#+BEGIN_SRC emacs-lisp
+(use-package nix-mode :ensure t)
+(use-package nix-sandbox :ensure t)
+#+END_SRC
+
 ** Haskell
 #+BEGIN_SRC emacs-lisp
   (use-package lsp-haskell :ensure t)
   (use-package haskell-mode
+    :quelpa (haskell-mode :fetcher github :repo "sevanspowell/haskell-mode" :branch "pr-hoogle-process-wrapper")
     :defer t
     :init
     ;; (require 'lsp-ui)
@@ -324,7 +364,6 @@ Clocking
     (setq default-nix-wrapper
       (lambda (args)
 	(append
-	  ;; Change this to match your home directory/preferences
 	  (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
 		     (list (mapconcat 'identity args " "))
 	    )
@@ -332,16 +371,12 @@ Clocking
 	  )
 	)
       )
-    (setq haskell-nix-wrapper
-	  (lambda (args)
-	    (apply default-nix-wrapper (list (append args (list "--ghc-option" "-Wwarn"))))
-	    )
-	  )
     (setq haskell-process-type 'cabal-new-repl)
     ;; Haskell repl session that runs in the background
-    (setq haskell-process-wrapper-function haskell-nix-wrapper)
+    (setq haskell-process-wrapper-function default-nix-wrapper)
     ;; Haskell-ide-engine process
     (setq lsp-haskell-process-wrapper-function default-nix-wrapper)
+    (setq haskell-hoogle-server-command (lambda (port) (apply haskell-process-wrapper-function (list (list "hoogle" "server" "--local" "-p" (number-to-string port))))))
     (setq haskell-completing-read-function 'completing-read)
     (setq haskell-process-suggest-hoogle-imports t)
     (setq haskell-process-suggest-add-package t)
@@ -351,7 +386,7 @@ Clocking
     ;; (add-hook 'haskell-mode-hook #'lsp-haskell-enable)
     ;; Keep our haskell tags up to date (used for jumping to defn. etc.)
     (custom-set-variables '(haskell-tags-on-save t))
-    )
+   )
     (general-define-key
       :states '(normal motion)
       :keymaps 'haskell-mode-map
@@ -375,12 +410,7 @@ Clocking
       "pr" 'haskell-process-restart
       "pt" 'haskell-session-change-target
       )
-#+END_SRC
-
-** Nix
-#+BEGIN_SRC emacs-lisp
-(use-package nix-mode :ensure t)
-(use-package nix-sandbox :ensure t)
+    (setq tags-revert-without-query 1)
 #+END_SRC
 
 ** Terminal
