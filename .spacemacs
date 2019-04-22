@@ -33,7 +33,7 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(
+   '(purescript
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
@@ -41,6 +41,7 @@ This function should only modify configuration layer settings."
      ;; ----------------------------------------------------------------
      helm
      emacs-lisp
+     (elfeed :variables rmh-elfeed-org-files (list "~/Dropbox/org/rss-feeds.org"))
      neotree
      org
      markdown
@@ -48,11 +49,12 @@ This function should only modify configuration layer settings."
             shell-default-height 30
             shell-default-position 'bottom)
      lsp
-     (haskell :variables haskell-process-type 'cabal-repl)
+     (haskell :variables haskell-process-type 'cabal-new-repl)
      git
      json
      nixos
      restclient
+     scala
      )
 
    ;; List of additional packages that will be installed without being
@@ -65,8 +67,8 @@ This function should only modify configuration layer settings."
    dotspacemacs-additional-packages '(
                                       direnv
                                       nix-sandbox
-                                      ;; (lsp-haskell :location (recipe :fetcher github :repo "emacs-lsp/lsp-haskell"))
-                                      (lsp-haskell :location (recipe :fetcher file :path "~/code/ephox/tools/lsp-haskell"))
+                                      (lsp-haskell :location (recipe :fetcher github :repo "emacs-lsp/lsp-haskell"))
+                                      dhall-mode
                                       )
 
    ;; A list of packages that cannot be updated.
@@ -476,18 +478,6 @@ before packages are loaded."
   (setq org-src-tab-acts-natively t)
   (setq org-src-window-setup 'current-window)
   (with-eval-after-load 'org (setq org-startup-indented nil))
-  (setq org-capture-templates
-        (quote (("t" "Todo" entry (file org-inbox-file)
-                "* TODO %?\n%U\n%a\n" :clock-in t :clock-resume t)
-                ("n" "Note" entry (file org-inbox-file)
-                "* %? :NOTE:\n%U\n%a\n" :clock-in t :clock-resume t)
-                ("m" "Meeting" entry (file org-inbox-file)
-                "* MEETING with %? :MEETING:\n%U" :clock-in t :clock-resume t)
-                ("p" "Phone call" entry (file org-inbox-file)
-                "* PHONE %? :PHONE:\n%U" :clock-in t :clock-resume t)
-                ("h" "Habit" entry (file org-inbox-file)
-                 "* TODO %?\n%U\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n")
-                )))
   (setq org-global-properties (quote (("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
                                       ("STYLE_ALL" . "habit"))))
   (setq org-columns-default-format "%40ITEM(Task) %17Effort(Effort){:} %10CLOCKSUM")
@@ -514,7 +504,7 @@ before packages are loaded."
   (setq default-nix-wrapper
         (lambda (args)
           (append
-           (append (list "nix-shell" "-I" "tinypkgs-local=/home/sam/code/ephox/tools/tinypkgs" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
+           (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
                    (list (mapconcat 'identity args " "))
                    )
            (list (nix-current-sandbox))
@@ -529,7 +519,7 @@ before packages are loaded."
   (setq lsp-haskell-process-wrapper-function default-nix-wrapper)
 
   (add-hook 'haskell-mode-hook 'flycheck-mode)
-  (add-hook 'haskell-mode-hook #'lsp-haskell-enable)
+  (add-hook 'haskell-mode-hook #'lsp)
   (custom-set-variables '(haskell-tags-on-save t))
 
   (evil-leader/set-key-for-mode 'haskell-mode "gm" 'lsp-ui-imenu)
@@ -546,8 +536,54 @@ before packages are loaded."
   (evil-leader/set-key-for-mode 'haskell-mode "," 'completion-at-point)
   (evil-leader/set-key-for-mode 'haskell-mode "." 'lsp-describe-thing-at-point)
 
+  (setq lsp-ui-sideline-mode nil)
+
   (setq browse-url-browser-function 'browse-url-generic
         browse-url-generic-program "chromium-browser")
+
+  ;; Dhall
+  (setq dhall-repl-executable "dhall")
+  (add-to-list 'auto-mode-alist '("\\.dhall$" . dhall-mode))
+
+  (defun org-file-path (filename)
+    "Return the absolute address of an org file, given its relative name."
+    (concat (file-name-as-directory org-directory) filename))
+
+  (setq org-index-file (org-file-path "index.org"))
+  (setq org-ellipsis " ⤵")
+  (setq org-inbox-file (org-file-path "inbox.org"))
+  (setq org-archive-location
+        (concat (org-file-path "archive.org") "::* From %s"))
+  (setq org-log-done 'time)
+  (setq org-agenda-files (list org-index-file))
+  (setq org-refile-targets nil)
+  (add-to-list 'org-refile-targets `(,(org-file-path "index.org") :maxlevel . 3))
+
+  (defun sep/open-index-file ()
+    "Open the master org TODO list."
+    (interactive)
+    (find-file org-index-file)
+    (flycheck-mode -1)
+    (end-of-buffer))
+
+  (evil-leader/set-key "oi" 'sep/open-index-file)
+
+  (setq org-capture-templates
+        (quote (("p" "Project" entry (file org-inbox-file)
+                 "* TODO %?\n%U\nProject: %^{Project}\nFile: %^{File}")
+                ("t" "Todo" entry (file org-inbox-file)
+                 "* TODO %?\n%U\n%a\n")
+                ("n" "Note" entry (file org-inbox-file)
+                 "* %? :NOTE:\n%U\n%a\n")
+                ("m" "Meeting" entry (file org-inbox-file)
+                 "* MEETING with %? :MEETING:\n%U" :clock-in t :clock-resume t)
+                ("p" "Phone call" entry (file org-inbox-file)
+                 "* PHONE %? :PHONE:\n%U" :clock-in t :clock-resume t)
+                ("h" "Habit" entry (file org-inbox-file)
+                 "* TODO %?\n%U\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n")
+                )))
+  (setq org-refile-use-outline-path t)
+  (setq org-outline-path-complete-in-steps nil)
   )
 
 ;; Do not write anything past this comment. This is where Emacs will
@@ -563,9 +599,15 @@ This function is called at the very end of Spacemacs initialization."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(evil-want-Y-yank-to-eol nil)
+ '(haskell-process-log t)
+ '(haskell-process-suggest-remove-import-lines nil)
+ '(haskell-tags-on-save t)
+ '(lsp-ui-sideline-show-code-actions nil)
  '(package-selected-packages
    (quote
-    (nix-sandbox xterm-color ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline smeargle shell-pop restclient-helm restart-emacs rainbow-delimiters popwin persp-mode pcre2el paradox spinner orgit org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-plus-contrib org-mime org-download open-junk-file ob-restclient restclient ob-http nix-mode neotree multi-term move-text mmm-mode markdown-toc markdown-mode magit-gitflow macrostep lsp-haskell lsp-mode lorem-ipsum linum-relative link-hint intero flycheck indent-guide hydra hungry-delete htmlize hlint-refactor hl-todo hindent highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile helm-nixos-options nixos-options helm-mode-manager helm-make projectile pkg-info epl helm-hoogle helm-gitignore request helm-flx helm-descbinds helm-ag haskell-snippets yasnippet google-translate golden-ratio gnuplot gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit magit magit-popup git-commit ghub treepy let-alist graphql evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight eshell-z eshell-prompt-extras esh-help elisp-slime-nav dumb-jump f s direnv with-editor dash diminish define-word company-ghci company-ghc ghc company haskell-mode column-enforce-mode cmm-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async))))
+    (mvn meghanada maven-test-mode lsp-java groovy-mode groovy-imports pcache gradle-mode ensime sbt-mode scala-mode eclim xterm-color ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline smeargle shell-pop restclient-helm restart-emacs rainbow-delimiters popwin persp-mode pcre2el paradox spinner orgit org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-plus-contrib org-mime org-download open-junk-file ob-restclient restclient ob-http nix-mode neotree multi-term move-text mmm-mode markdown-toc markdown-mode magit-gitflow macrostep lsp-haskell lsp-mode lorem-ipsum linum-relative link-hint intero flycheck indent-guide hydra hungry-delete htmlize hlint-refactor hl-todo hindent highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile helm-nixos-options nixos-options helm-mode-manager helm-make projectile pkg-info epl helm-hoogle helm-gitignore request helm-flx helm-descbinds helm-ag haskell-snippets yasnippet google-translate golden-ratio gnuplot gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit magit magit-popup git-commit ghub treepy let-alist graphql evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight eshell-z eshell-prompt-extras esh-help elisp-slime-nav dumb-jump f s direnv with-editor dash diminish define-word company-ghci company-ghc ghc company haskell-mode column-enforce-mode cmm-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async)))
+ '(psc-ide-add-import-on-completion t t)
+ '(psc-ide-rebuild-on-save nil t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
