@@ -12,7 +12,7 @@
                            ("melpa" . "https://melpa.org/packages/")))
 
   (package-initialize)
-  
+
   ;; Use 'quelpa' and 'quelpa-use-package'
   (if (require 'quelpa nil t)
     (with-temp-buffer
@@ -32,9 +32,206 @@
   (load custom-file 'noerror))
 #+END_SRC
 
+** Helpers
+#+BEGIN_SRC emacs-lisp
+;; https://www.emacswiki.org/emacs/AnsiTermHints
+(defun term/shell (program &optional new-buffer-name)
+      "Start a terminal-emulator in a new buffer.
+
+    With a prefix argument, it prompts the user for the shell
+    executable.
+
+    If there is already existing buffer with the same name, switch to
+    that buffer, otherwise it creates new buffer.
+
+    Like `shell', it loads `~/.emacs_SHELLNAME' if exists, or
+    `~/.emacs.d/init_SHELLNAME.sh'.
+
+    The shell file name (sans directories) is used to make a symbol
+    name such as `explicit-bash-args'.  If that symbol is a variable,
+    its value is used as a list of arguments when invoking the
+    shell."
+      (interactive (let ((default-prog (or explicit-shell-file-name
+                                           (getenv "ESHELL")
+                                           shell-file-name
+                                           (getenv "SHELL")
+                                           "/bin/sh")))
+                     (list (if (or (null default-prog)
+                                   current-prefix-arg)
+                               (read-from-minibuffer "Run program: " default-prog)
+                             default-prog))))
+
+      ;; Pick the name of the new buffer.
+      (setq term-ansi-buffer-name
+            (if new-buffer-name
+                new-buffer-name
+              (if term-ansi-buffer-base-name
+                  (if (eq term-ansi-buffer-base-name t)
+                      (file-name-nondirectory program)
+                    term-ansi-buffer-base-name)
+                "shell/term")))
+
+      (setq term-ansi-buffer-name (concat "*" term-ansi-buffer-name "*"))
+
+      ;; In order to have more than one term active at a time
+      ;; I'd like to have the term names have the *term-ansi-term<?>* form,
+      ;; for now they have the *term-ansi-term*<?> form but we'll see...
+      (when current-prefix-arg
+        (setq term-ansi-buffer-name
+              (generate-new-buffer-name term-ansi-buffer-name)))
+
+      (let* ((name (file-name-nondirectory program))
+             (startfile (concat "~/.emacs_" name))
+             (xargs-name (intern-soft (concat "explicit-" name "-args"))))
+        (unless (file-exists-p startfile)
+          (setq startfile (concat user-emacs-directory "init_" name ".sh")))
+
+        (setq term-ansi-buffer-name
+              (apply 'term-ansi-make-term term-ansi-buffer-name program
+                     (if (file-exists-p startfile) startfile)
+                     (if (and xargs-name (boundp xargs-name))
+                         ;; `term' does need readline support.
+                         (remove "--noediting" (symbol-value xargs-name))
+                       '("-i")))))
+
+      (set-buffer term-ansi-buffer-name)
+      (term-mode)
+      (term-line-mode)                      ; (term-char-mode) if you want
+
+      (switch-to-buffer term-ansi-buffer-name))
+(defun term/shell (program &optional new-buffer-name)
+      "Start a terminal-emulator in a new buffer.
+
+    With a prefix argument, it prompts the user for the shell
+    executable.
+
+    If there is already existing buffer with the same name, switch to
+    that buffer, otherwise it creates new buffer.
+
+    Like `shell', it loads `~/.emacs_SHELLNAME' if exists, or
+    `~/.emacs.d/init_SHELLNAME.sh'.
+
+    The shell file name (sans directories) is used to make a symbol
+    name such as `explicit-bash-args'.  If that symbol is a variable,
+    its value is used as a list of arguments when invoking the
+    shell."
+      (interactive (let ((default-prog (or explicit-shell-file-name
+                                           (getenv "ESHELL")
+                                           shell-file-name
+                                           (getenv "SHELL")
+                                           "/bin/sh")))
+                     (list (if (or (null default-prog)
+                                   current-prefix-arg)
+                               (read-from-minibuffer "Run program: " default-prog)
+                             default-prog))))
+
+      ;; Pick the name of the new buffer.
+      (setq term-ansi-buffer-name
+            (if new-buffer-name
+                new-buffer-name
+              (if term-ansi-buffer-base-name
+                  (if (eq term-ansi-buffer-base-name t)
+                      (file-name-nondirectory program)
+                    term-ansi-buffer-base-name)
+                "shell/term")))
+
+      (setq term-ansi-buffer-name (concat "*" term-ansi-buffer-name "*"))
+
+      ;; In order to have more than one term active at a time
+      ;; I'd like to have the term names have the *term-ansi-term<?>* form,
+      ;; for now they have the *term-ansi-term*<?> form but we'll see...
+      (when current-prefix-arg
+        (setq term-ansi-buffer-name
+              (generate-new-buffer-name term-ansi-buffer-name)))
+
+      (let* ((name (file-name-nondirectory program))
+             (startfile (concat "~/.emacs_" name))
+             (xargs-name (intern-soft (concat "explicit-" name "-args"))))
+        (unless (file-exists-p startfile)
+          (setq startfile (concat user-emacs-directory "init_" name ".sh")))
+
+        (setq term-ansi-buffer-name
+              (apply 'term-ansi-make-term term-ansi-buffer-name program
+                     (if (file-exists-p startfile) startfile)
+                     (if (and xargs-name (boundp xargs-name))
+                         ;; `term' does need readline support.
+                         (remove "--noediting" (symbol-value xargs-name))
+                       '("-i")))))
+
+      (set-buffer term-ansi-buffer-name)
+      (term-mode)
+      (term-line-mode)                      ; (term-char-mode) if you want
+
+      (switch-to-buffer term-ansi-buffer-name))
+(defun term/shell (program &optional new-buffer-name)
+      "Start a terminal-emulator in a new buffer.
+
+    With a prefix argument, it prompts the user for the shell
+    executable.
+
+    If there is already existing buffer with the same name, switch to
+    that buffer, otherwise it creates new buffer.
+
+    Like `shell', it loads `~/.emacs_SHELLNAME' if exists, or
+    `~/.emacs.d/init_SHELLNAME.sh'.
+
+    The shell file name (sans directories) is used to make a symbol
+    name such as `explicit-bash-args'.  If that symbol is a variable,
+    its value is used as a list of arguments when invoking the
+    shell."
+      (interactive (let ((default-prog (or explicit-shell-file-name
+                                           (getenv "ESHELL")
+                                           shell-file-name
+                                           (getenv "SHELL")
+                                           "/bin/sh")))
+                     (list (if (or (null default-prog)
+                                   current-prefix-arg)
+                               (read-from-minibuffer "Run program: " default-prog)
+                             default-prog))))
+
+      ;; Pick the name of the new buffer.
+      (setq term-ansi-buffer-name
+            (if new-buffer-name
+                new-buffer-name
+              (if term-ansi-buffer-base-name
+                  (if (eq term-ansi-buffer-base-name t)
+                      (file-name-nondirectory program)
+                    term-ansi-buffer-base-name)
+                "shell/term")))
+
+      (setq term-ansi-buffer-name (concat "*" term-ansi-buffer-name "*"))
+
+      ;; In order to have more than one term active at a time
+      ;; I'd like to have the term names have the *term-ansi-term<?>* form,
+      ;; for now they have the *term-ansi-term*<?> form but we'll see...
+      (when current-prefix-arg
+        (setq term-ansi-buffer-name
+              (generate-new-buffer-name term-ansi-buffer-name)))
+
+      (let* ((name (file-name-nondirectory program))
+             (startfile (concat "~/.emacs_" name))
+             (xargs-name (intern-soft (concat "explicit-" name "-args"))))
+        (unless (file-exists-p startfile)
+          (setq startfile (concat user-emacs-directory "init_" name ".sh")))
+
+        (setq term-ansi-buffer-name
+              (apply 'term-ansi-make-term term-ansi-buffer-name program
+                     (if (file-exists-p startfile) startfile)
+                     (if (and xargs-name (boundp xargs-name))
+                         ;; `term' does need readline support.
+                         (remove "--noediting" (symbol-value xargs-name))
+                       '("-i")))))
+
+      (set-buffer term-ansi-buffer-name)
+      (term-mode)
+      (term-line-mode)                      ; (term-char-mode) if you want
+
+      (switch-to-buffer term-ansi-buffer-name))
+#+END_SRC
+
 ** Packages
 #+BEGIN_SRC emacs-lisp
-  (use-package diminish 
+  (use-package diminish
     :ensure t
     :init
     (diminish 'undo-tree-mode)
@@ -91,6 +288,14 @@
   (use-package evil-magit
     :ensure t
   )
+  (use-package ace-window
+    :ensure t
+    :init
+    (progn
+      (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+      (setq aw-dispatch-always t)
+    )
+    )
   (use-package sudo-edit
     :ensure t
   )
@@ -104,7 +309,15 @@
     :config
     (projectile-mode)
     (setq projectile-completion-system 'ivy)
+    (defun projectile-run-ansi-term ()
+      "Invoke `ansi-term' in the project's root.
+
+    Switch to the project specific shell buffer if it already exists."
+      (interactive)
+      (projectile-with-default-dir (projectile-ensure-project (projectile-project-root))
+        (term/shell "bash" (concat "ansi-term " (projectile-project-name))))
     )
+  )
   (use-package company
     :ensure t
     :diminish company-mode
@@ -158,7 +371,7 @@
 
     "ap"  'counsel-list-processes
     "j"  '(:ignore t :which-key "jump")
-    "js" '(counsel-grep-or-swiper :which-key "swiper")
+    "js" '(swiper-isearch :which-key "swiper")
     "jl" 'avy-goto-line
     "jk" 'avy-goto-char
     "bb" 'ivy-switch-buffer
@@ -191,7 +404,8 @@
     "pR"  'projectile-replace
     "pp"  'projectile-switch-project
     "ps"  'counsel-git-grep
-    "p'"  'projectile-run-shell
+    "p'"  'projectile-run-ansi-term
+
 
     "h"   '(:ignore t :which-key "help")
     "hd"  '(:ignore t :which-key "describe")
@@ -226,6 +440,7 @@
     "wH" 'evil-window-move-far-left
     "wl" 'evil-window-right
     "wL" 'evil-window-move-far-right
+    "ww" 'ace-window
 
     "ut" 'undo-tree-visualize
 
@@ -248,6 +463,8 @@ Disable menu, scroll bar:
   (menu-bar-mode 0)
   (scroll-bar-mode -1)
   (fringe-mode '(0 . 0))
+  (setq scroll-conservatively 100)
+  (column-number-mode)
 #+END_SRC
 
 *** Backups
@@ -279,15 +496,17 @@ Disable menu, scroll bar:
  (setq sentence-end-double-space nil)
  ; Toggle wrapping text at the 80th character
  (setq default-fill-column 80)
+ (defalias 'yes-or-no-p 'y-or-n-p)
+ (setq initial-scratch-message nil)
 #+END_SRC
 
 ** Theme
 #+BEGIN_SRC emacs-lisp
-  (set-frame-font "DejaVu Sans Mono-8")
   (use-package doom-themes :ensure t)
   (use-package nimbus-theme :ensure t)
   (use-package base16-theme :ensure t)
   (load-theme 'nimbus t)
+  (when window-system (global-hl-line-mode t))
 #+END_SRC
 
 ** Org mode
@@ -316,7 +535,7 @@ meetings, and org-protocol.
     )
   (setq org-global-properties (quote (("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
     ("STYLE_ALL" . "habit")))
-    )  
+    )
 
   (setq org-enforce-todo-dependencies t)
 
@@ -411,6 +630,19 @@ Clocking
       "pt" 'haskell-session-change-target
       )
     (setq tags-revert-without-query 1)
+#+END_SRC
+
+** Elisp
+#+BEGIN_SRC emacs-lisp
+  (general-define-key
+    :states '(normal motion)
+    :keymaps 'emacs-lisp-mode-map
+    :prefix ","
+    "gg" 'xref-find-definitions
+    "gG" 'xref-find-references
+    "df" '(lambda () (interactive) (eval-defun 'edebugit))
+    "dF" '(lambda () (interactive) (eval-defun nil))
+    )
 #+END_SRC
 
 ** Terminal
