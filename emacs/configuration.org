@@ -465,6 +465,8 @@ Disable menu, scroll bar:
   (fringe-mode '(0 . 0))
   (setq scroll-conservatively 100)
   (column-number-mode)
+  (setq recentf-max-saved-items 1000)
+  (setq recentf-max-menu-items 25)
 #+END_SRC
 
 *** Backups
