@@ -442,9 +442,10 @@
     "wL" 'evil-window-move-far-right
     "ww" 'ace-window
 
-    "ut" 'undo-tree-visualize
+    "au" 'undo-tree-visualize
 
     "xtc" 'transpose-chars
+    "xtw" 'transpose-words
 
     "g" '(:ignore t :which-key "git")
     "gs" 'magit
@@ -560,6 +561,7 @@ Clocking
     "C"  '(:ignore t :which-key "clock")
     "Ci" 'org-clock-in
     "Co" 'org-clock-out
+    "Ce" 'org-evaluate-time-range
     ";"  'org-columns
     "tE" 'org-toggle-pretty-entities
     "tn" 'org-table-create
@@ -602,6 +604,7 @@ Clocking
     (setq haskell-process-suggest-hoogle-imports t)
     (setq haskell-process-suggest-add-package t)
     (setq haskell-process-log t)
+    (setq haskell-interactive-popup-errors nil)
 
     ;; Load lsp-haskell when we activate haskell mode in a buffer
     ;; (add-hook 'haskell-mode-hook #'lsp-haskell-enable)
