@@ -616,6 +616,7 @@ Clocking
       :keymaps 'haskell-mode-map
       :prefix ","
       "ss" 'haskell-interactive-switch
+      "st" 'haskell-session-change-target
       "sb" 'haskell-process-load-file
       "gi" 'haskell-navigate-imports
       "gg" 'haskell-mode-tag-find
@@ -631,8 +632,8 @@ Clocking
       :keymaps 'haskell-interactive-mode-map
       :prefix ","
       "ss" 'haskell-interactive-switch-back
+      "st" 'haskell-session-change-target
       "pr" 'haskell-process-restart
-      "pt" 'haskell-session-change-target
       )
     (setq tags-revert-without-query 1)
 #+END_SRC
