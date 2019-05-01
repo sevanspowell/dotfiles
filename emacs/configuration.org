@@ -640,6 +640,7 @@ Clocking
       :prefix ","
       "ss" 'haskell-interactive-switch
       "st" 'haskell-session-change-target
+      "sr" 'haskell-process-restart
       "sb" 'haskell-process-load-file
       "gi" 'haskell-navigate-imports
       "gg" 'haskell-mode-tag-find
