@@ -611,9 +611,8 @@ Clocking
       (lambda (args)
 	(append
 	  (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
-		     (list (mapconcat 'identity args " "))
+		  (list (mapconcat 'identity (append args (list "--ghc-option=-Wwarn")) " "))
 	    )
-	    (list (nix-current-sandbox))
 	  )
 	)
       )
