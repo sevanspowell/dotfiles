@@ -611,17 +611,28 @@ Clocking
       (lambda (args)
 	(append
 	  (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
+		  (list (mapconcat 'identity args " "))
+	    )
+	    (list (nix-current-sandbox))	
+	  )
+	)
+      )
+    (setq haskell-nix-wrapper
+      (lambda (args)
+	(append
+	  (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
 		  (list (mapconcat 'identity (append args (list "--ghc-option=-Wwarn")) " "))
 	    )
+	    (list (nix-current-sandbox))	
 	  )
 	)
       )
     (setq haskell-process-type 'cabal-new-repl)
     ;; Haskell repl session that runs in the background
-    (setq haskell-process-wrapper-function default-nix-wrapper)
+    (setq haskell-process-wrapper-function haskell-nix-wrapper)
     ;; Haskell-ide-engine process
     (setq lsp-haskell-process-wrapper-function default-nix-wrapper)
-    (setq haskell-hoogle-server-command (lambda (port) (apply haskell-process-wrapper-function (list (list "hoogle" "server" "--local" "-p" (number-to-string port))))))
+    (setq haskell-hoogle-server-command (lambda (port) (apply default-nix-wrapper (list (list "hoogle" "server" "--local" "-p" (number-to-string port))))))
     (setq haskell-completing-read-function 'completing-read)
     (setq haskell-process-suggest-hoogle-imports t)
     (setq haskell-process-suggest-add-package t)
