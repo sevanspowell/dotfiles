@@ -231,6 +231,9 @@
 
 ** Packages
 #+BEGIN_SRC emacs-lisp
+  (use-package restclient
+    :ensure t
+  )
   (use-package diminish
     :ensure t
     :init
@@ -332,7 +335,7 @@
     :ensure t
     :diminish company-mode
     :config
-    (global-company-mode)
+    ;; (global-company-mode)
     (setq company-idle-delay 0.2)
     (setq company-selection-wrap-around t)
     )
@@ -428,7 +431,8 @@
     "pp"  'projectile-switch-project
     "ps"  'counsel-git-grep
     "p'"  'projectile-run-ansi-term
-
+    "pip"  'projectile-cleanup-known-projects
+    "pif"  'projectile-invalidate-cache
 
     "h"   '(:ignore t :which-key "help")
     "hd"  '(:ignore t :which-key "describe")
@@ -472,6 +476,7 @@
 
     "g" '(:ignore t :which-key "git")
     "gs" 'magit
+    "gf" 'magit-find-file
 
     "ol" 'sort-lines
 
@@ -531,7 +536,7 @@ Disable menu, scroll bar:
   (use-package doom-themes :ensure t)
   (use-package nimbus-theme :ensure t)
   (use-package base16-theme :ensure t)
-  (load-theme 'nimbus t)
+  (load-theme 'doom-Iosvkem t)
   (when window-system (global-hl-line-mode t))
 #+END_SRC
 
@@ -588,6 +593,7 @@ Clocking
     ";"  'org-columns
     "tE" 'org-toggle-pretty-entities
     "tn" 'org-table-create
+    "ti" '(lambda () (interactive) (let ((current-prefix-arg '(0))) (call-interactively 'org-time-stamp-inactive)))
     )
 #+END_SRC
 

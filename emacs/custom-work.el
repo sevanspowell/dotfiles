@@ -14,7 +14,7 @@
  '(objed-cursor-color "#ff6c6b")
  '(package-selected-packages
    (quote
-    (ivy-xref ivy-rich lsp-haskell nix-sandbox ido-vertical-mode ace-window quelpa-use-package quelpa diminish projectile base16-theme nix-mode haskell-mode haskell tramp-mode evil-magit magit doom-themes evil-surround which-key evil counsel swiper avy general use-package)))
+    (restclient ivy-xref ivy-rich lsp-haskell nix-sandbox ido-vertical-mode ace-window quelpa-use-package quelpa diminish projectile base16-theme nix-mode haskell-mode haskell tramp-mode evil-magit magit doom-themes evil-surround which-key evil counsel swiper avy general use-package)))
  '(vc-annotate-background "#1D252C")
  '(vc-annotate-color-map
    (list
