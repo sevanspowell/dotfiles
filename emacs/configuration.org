@@ -660,6 +660,7 @@ Clocking
       "sb" 'haskell-process-load-file
       "gi" 'haskell-navigate-imports
       "gg" 'haskell-mode-tag-find
+      "gb" 'xref-pop-marker-stack
       "gr" 'xref-find-references
       "gc" 'haskell-cabal-visit-file
       "ds" 'haskell-mode-toggle-scc-at-point
@@ -686,6 +687,7 @@ Clocking
     :keymaps 'emacs-lisp-mode-map
     :prefix ","
     "gg" 'xref-find-definitions
+    "gb" 'xref-pop-marker-stack
     "gG" 'xref-find-references
     "df" '(lambda () (interactive) (eval-defun 'edebugit))
     "dF" '(lambda () (interactive) (eval-defun nil))
