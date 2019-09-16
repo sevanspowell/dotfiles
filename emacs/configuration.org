@@ -252,6 +252,7 @@
     )
   (use-package general :ensure t)
   (use-package swiper :ensure t)
+  (use-package hydra :ensure t)
   (use-package counsel :ensure t)
   (use-package which-key :ensure t
     :config
@@ -614,6 +615,15 @@ Clocking
 #+BEGIN_SRC emacs-lisp
 (use-package nix-mode :ensure t)
 (use-package nix-sandbox :ensure t)
+#+END_SRC
+
+** Scala
+
+#+BEGIN_SRC emacs-lisp
+  (use-package scala-mode
+    :ensure t
+    :interpreter
+    ("scala" . scala-mode))
 #+END_SRC
 
 ** Haskell
