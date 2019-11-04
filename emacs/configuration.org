@@ -607,7 +607,11 @@ Clocking
     ";"  'org-columns
     "tE" 'org-toggle-pretty-entities
     "tn" 'org-table-create
-    "ti" '(lambda () (interactive) (let ((current-prefix-arg '(0))) (call-interactively 'org-time-stamp-inactive)))
+    "tt" '(lambda () (interactive) (let ((current-prefix-arg '(0))) (call-interactively 'org-time-stamp-inactive)))
+    "TT" 'org-todo
+    "Ts" 'org-sort
+    "cx" 'org-toggle-checkbox
+    "ci" 'org-insert-todo-heading
     )
 #+END_SRC
 
@@ -633,35 +637,10 @@ Clocking
     :quelpa (haskell-mode :fetcher github :repo "sevanspowell/haskell-mode" :branch "pr-hoogle-process-wrapper")
     :defer t
     :init
-    ;; (require 'lsp-ui)
-    ;; (require 'lsp-haskell)
-    ;; (add-hook 'haskell-mode-hook #'lsp)
-    (setq default-nix-wrapper
-      (lambda (args)
-	(append
-	  (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
-		  (list (mapconcat 'identity args " "))
-	    )
-	    (list (nix-current-sandbox))	
-	  )
-	)
-      )
-    (setq haskell-nix-wrapper
-      (lambda (args)
-	(append
-	  (append (list "nix-shell" "-I" "ssh-config-file=/home/sam/.ssh/nixbuild.config" "--command" )
-		  (list (mapconcat 'identity (append args (list "--ghc-option=-Wwarn")) " "))
-	    )
-	    (list (nix-current-sandbox))	
-	  )
-	)
-      )
     (setq haskell-process-type 'cabal-new-repl)
-    ;; Haskell repl session that runs in the background
-    (setq haskell-process-wrapper-function haskell-nix-wrapper)
-    ;; Haskell-ide-engine process
-    (setq lsp-haskell-process-wrapper-function default-nix-wrapper)
-    (setq haskell-hoogle-server-command (lambda (port) (apply default-nix-wrapper (list (list "hoogle" "server" "--local" "-p" (number-to-string port))))))
+    (setq haskell-process-wrapper-function 'identity)
+    (setq lsp-haskell-process-wrapper-function 'identity)
+    (setq haskell-hoogle-server-command (lambda (port) (list "hoogle" "server" "--local" "-p" (number-to-string port))))
     (setq haskell-completing-read-function 'completing-read)
     (setq haskell-process-suggest-hoogle-imports t)
     (setq haskell-process-suggest-add-package t)
@@ -681,7 +660,9 @@ Clocking
       "st" 'haskell-session-change-target
       "sr" 'haskell-process-restart
       "sb" 'haskell-process-load-file
+      "sk" 'haskell-session-kill
       "gi" 'haskell-navigate-imports
+      "gI" 'haskell-navigate-imports-return
       "gg" 'haskell-mode-tag-find
       "gb" 'xref-pop-marker-stack
       "gr" 'xref-find-references
@@ -701,6 +682,22 @@ Clocking
       "pr" 'haskell-process-restart
       )
     (setq tags-revert-without-query 1)
+  (use-package hasklig-mode
+    :ensure t
+    :hook (haskell-mode))
+  (use-package dante
+    :ensure t
+    :after haskell-mode
+    :commands 'dante-mode
+    :init
+    (add-hook 'haskell-mode-hook 'flycheck-mode)
+    ;; OR:
+    ;; (add-hook 'haskell-mode-hook 'flymake-mode)
+    (add-hook 'haskell-mode-hook 'dante-mode)
+    (add-hook 'dante-mode-hook
+       '(lambda () (flycheck-add-next-checker 'haskell-dante
+                    '(warning . haskell-hlint))))
+    )
 #+END_SRC
 
 ** Elisp
@@ -715,6 +712,50 @@ Clocking
     "df" '(lambda () (interactive) (eval-defun 'edebugit))
     "dF" '(lambda () (interactive) (eval-defun nil))
     )
+#+END_SRC
+
+** Purescript
+#+BEGIN_SRC emacs-lisp
+  (use-package purescript-mode
+    :ensure t
+    :init
+    ;; (add-hook 'purescript-mode-hook 'turn-on-purescript-indentation)
+    ;; (add-hook 'purescript-mode-hook '(cua-selection-mode nil))
+    (general-define-key
+      :states '(normal motion)
+      :keymaps 'purescript-mode-map
+      "C-," 'purescript-mode-nested-left
+      "C-." 'purescript-mode-nested-right
+      )
+    (general-define-key
+      :states '(normal motion)
+      :keymaps 'purescript-mode-map
+      :prefix ","
+      "gg" 'psc-ide-goto-definition
+      "gb" 'xref-pop-marker-stack
+      "cn" 'flycheck-next-error
+      "cp" 'flycheck-previous-error
+      )
+    )
+  (use-package psc-ide
+    :ensure t
+    :init
+    (add-hook 'purescript-mode-hook
+      (lambda ()
+        (psc-ide-mode)
+        (company-mode)
+        (flycheck-mode)
+        (turn-on-purescript-indentation)))
+    (setq psc-ide-use-purs t)
+  )
+#+END_SRC
+
+** Direnv
+#+BEGIN_SRC emacs-lisp
+  (use-package direnv
+    :ensure t
+    :config
+    (direnv-mode))
 #+END_SRC
 
 ** Terminal
