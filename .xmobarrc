@@ -7,12 +7,13 @@ Config { font = "xft:Source Code Pro:bold:size=9:antialias=true"
                     , Run Memory [ "--template", "Mem: <usedratio>%"
                                  , "--Low"     , "20"          -- units: %
                                  , "--High"    , "80"          -- units: %
-                                 , "--low"     , "#2d9574" 
-                                 , "--normal"  , "orange" 
-                                 , "--high"    , "red" 
+                                 , "--low"     , "#2d9574"
+                                 , "--normal"  , "orange"
+                                 , "--high"    , "red"
                                  ] 10
                     , Run Swap [] 10
                     , Run Date "%a %b %_d %T" "date" 10
+                    , Run DateZone "%a %b %_d %T" "en_AU" "GMT" "dateUTC" 10
                     , Run DynNetwork [ "--template" , "<dev>: <tx>kB/s"
                                      , "--Low"      , "50000"   -- units: B/s
                                      , "--High"     , "500000"   -- units: B/s
@@ -21,8 +22,12 @@ Config { font = "xft:Source Code Pro:bold:size=9:antialias=true"
                                      , "--high"     , "red"
                                      ] 10
                     , Run StdinReader
+                    , Run DiskU [("/", "<used>/<size>")]
+                    ["-L", "20", "-H", "50", "-m", "1", "-p", "3",
+                    "--normal", "grey50", "--high", "red",
+                    "--low", "#2d9574"] 20
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = "%StdinReader% }{ %cpu% | %memory% | %swap% | %dynnetwork% | <fc=#bc6ec5>%date%</fc> "
-       }
+       , template = "%StdinReader% }{ %cpu% | %memory% | %disku% | %swap% | %dynnetwork% | %dateUTC% | <fc=#bc6ec5>%date%</fc> "
+}
