@@ -764,6 +764,14 @@ Clocking
    [default bold shadow italic underline bold bold-italic bold])
 #+END_SRC
 
+** Ops
+
+#+BEGIN_SRC emacs-lisp
+  (use-package terraform-mode
+    :ensure t
+  )
+#+END_SRC
+
 ** Contact
 
 mail@sevanspowell.net
