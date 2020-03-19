@@ -1,18 +1,22 @@
 # https://gist.github.com/taktoa/3133a4d9b1614fad1f4841f145441406
 # Add this file to your /etc/nixos/configuration.nix `imports = [ ... ];` attribute.
 #
-# After running `nixos-rebuild switch`, `systemctl --user start keybase-gui.service`
-# can be used to start the Keybase GUI.
+# After running `nixos-rebuild switch`, running `Keybase` can be used
+# to start the Keybase GUI.
 #
 # Not sure if it's just my tiling window manager, but there is a bit of wonkiness
 # with the tray icon. Other than that it works perfectly (as of 2017/11/22).
-
 { pkgs, ... }:
+
+let
+  startKeybase = pkgs.writeShellScriptBin "Keybase" ''
+    systemctl --user start keybase-gui.service
+  '';
+in
 
 {
   services.kbfs = {
     enable = true;
-    mountPoint = "%t/kbfs";
     extraFlags = [ "-label %u" ];
   };
 
@@ -35,4 +39,6 @@
       };
     };
   };
+
+  environment.systemPackages = [ startKeybase ];
 }
