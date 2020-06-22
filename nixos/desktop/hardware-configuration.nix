@@ -9,6 +9,7 @@
     ];
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "usbhid" "usb_storage" "sd_mod" "sr_mod" ];
+  boot.initrd.kernelModules = [ "dm-snapshot" ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
@@ -22,10 +23,10 @@
     };
   fileSystems."cryptswap".device = "/dev/mapper/swap";
 
-  boot.initrd.luks.devices = [
-   { name = "cryptroot"; device = "/dev/sda6"; preLVM = true; }
-   { name = "cryptswap"; device = "/dev/sda7"; preLVM = true; }
-  ]; 
+  boot.initrd.luks.devices = {
+   cryptroot = { device = "/dev/sda7"; preLVM = true; };
+   cryptswap = { device = "/dev/sda8"; preLVM = true; };
+  }; 
 
   swapDevices = [
     { device = "/dev/disk/by-label/swap"; }
